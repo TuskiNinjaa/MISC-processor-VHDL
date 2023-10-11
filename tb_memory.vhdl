@@ -27,6 +27,7 @@ begin
 
         type vetor_tabela_verdade is array (0 to 11) of colunas_tabela_verdade;
 
+        -- Implement more test cases
         constant tabela_verdade : vetor_tabela_verdade := (
             ('0', '0', '1', x"0010", x"1234", x"00000000"),
             ('1', '0', '1', x"0010", x"1234", x"00000000"),

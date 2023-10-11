@@ -26,7 +26,7 @@ architecture behavioral of memory is
     signal ram : data_memory := (others => (others => '0'));
 begin
 
-    -- Edge-triggered memory
+    -- Edge-triggered random access memory
     process (clock)
     begin
         
