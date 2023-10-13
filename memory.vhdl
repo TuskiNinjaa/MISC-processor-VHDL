@@ -30,7 +30,7 @@ begin
     process (clock)
     begin
         
-        if clock = '1' then
+        if clock = '0' then
             if data_read = '1' and data_write = '0' then
                 data_out <= ram(to_integer(unsigned(data_addr))+3) & ram(to_integer(unsigned(data_addr))+2) & ram(to_integer(unsigned(data_addr))+1) & ram(to_integer(unsigned(data_addr)));
             elsif data_read = '0' and data_write = '1' then
