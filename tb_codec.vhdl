@@ -19,44 +19,42 @@ begin
             codec_data_in, codec_data_out : std_logic_vector(7 downto 0);
         end record;
 
-        type vetor_tabela_verdade is array (0 to 33) of colunas_tabela_verdade;
+        type vetor_tabela_verdade is array (0 to 31) of colunas_tabela_verdade;
 
         -- Implement more test cases
         constant tabela_verdade : vetor_tabela_verdade := (
-            ('0', '0', '1', '0', x"00", x"00"),
-            ('1', '0', '1', '0', x"00", x"00"),
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00"), -- read interrupt
-            ('0', '1', '0', '0', x"00", x"00"), -- read wait
-            ('1', '1', '0', '0', x"00", x"00") -- read interrupt
+            ('0', '0', '1', '0', x"AB", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"AB", x"00"), -- WRITE start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"0C"), -- READ start
+            ('0', '0', '1', '0', x"FF", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"FF", x"00"), -- WRITE start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"0B"), -- READ start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '0', x"00", x"00"), -- READ start
+            ('0', '0', '1', '0', x"00", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"00", x"00"), -- WRITE start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"1F"), -- READ start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"29"), -- READ start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"CD"), -- READ start
+            ('0', '0', '1', '0', x"27", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"27", x"00"), -- WRITE start
+            ('0', '0', '1', '0', x"11", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"11", x"00"), -- WRITE start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"7F"), -- READ start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '1', x"00", x"80"), -- READ start
+            ('0', '0', '1', '0', x"7F", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"7F", x"00"), -- WRITE start
+            ('0', '0', '1', '0', x"80", x"00"), -- WRITE wait
+            ('1', '0', '1', '1', x"80", x"00"), -- WRITE start
+            ('0', '1', '0', '0', x"00", x"00"), -- READ wait
+            ('1', '1', '0', '0', x"00", x"00") -- READ start
         );
 
     begin
@@ -69,8 +67,6 @@ begin
 
             wait for 1 ns;
 
-            report "i = " & integer'image(i);
-            report "codec_data_out = " & integer'image(to_integer(unsigned(codec_data_out(7 downto 4))));
             assert valid = tabela_verdade(i).valid report "ERROR: Wrong 'valid' value at teste case: " & integer'image(i);
             assert codec_data_out = tabela_verdade(i).codec_data_out report "ERROR: Wrong 'codec_data_out' value at teste case: " & integer'image(i);
             

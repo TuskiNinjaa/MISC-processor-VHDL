@@ -17,18 +17,36 @@ entity codec is
 end entity;
 
 architecture behavioral of codec is
+    file file_input : text open read_mode is "input.txt";
+    file file_output : text open write_mode is "output.txt";
 begin
 
-    -- process (interrupt)
-    -- begin
-    --     if interrupt = '1' then
-    --         if read_signal = '1' and write_signal = '0' then -- opcode IN
+    process (interrupt)
+        variable text_line : line;
+        variable text_number : integer;
+    begin
+        valid <= '0';
+        codec_data_out <= std_logic_vector(to_unsigned(0, 8));
+        text_line := null;
+
+        if interrupt = '1' then
+            if read_signal = '1' and write_signal = '0' and not endfile(file_input) then -- opcode IN
+                readline(file_input, text_line);
+
+                if text_line'length > 0 then
+                    read(text_line, text_number);
+                    codec_data_out <= std_logic_vector(to_signed(text_number, 8));
+                    valid <= '1';
+                end if;
                 
-    --         elsif read_signal = '0' and write_signal = '1' then -- opcode OUT
+            elsif read_signal = '0' and write_signal = '1' then -- opcode OUT
+                write(text_line, to_integer(signed(codec_data_in)));
+                writeline(file_output, text_line);
+                valid <= '1';
+                
+            end if;
 
-    --     end if;
-
-    --     valid <= '1';
-    -- end process;
+        end if;
+    end process;
 
 end architecture;
