@@ -29,7 +29,8 @@ begin
     -- Edge-triggered random access memory
     process (clock)
     begin
-        
+        data_out <= std_logic_vector(to_unsigned(0, data_width*4));
+
         if clock = '0' then
             if data_read = '1' and data_write = '0' then
                 data_out <= ram(to_integer(unsigned(data_addr))+3) & ram(to_integer(unsigned(data_addr))+2) & ram(to_integer(unsigned(data_addr))+1) & ram(to_integer(unsigned(data_addr)));
@@ -37,10 +38,7 @@ begin
                 ram(to_integer(unsigned(data_addr))) <= data_in(data_width-1 downto 0);
                 ram(to_integer(unsigned(data_addr))+1) <= data_in(2*data_width-1 downto data_width);
             end if; 
-
-        else
-            data_out <= std_logic_vector(to_unsigned(0, data_width*4));
-
+      
         end if;
         
     end process;
