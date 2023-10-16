@@ -36,7 +36,7 @@ begin
             elsif data_read = '0' and data_write = '1' then
                 ram(to_integer(unsigned(data_addr))) <= data_in(data_width-1 downto 0);
                 ram(to_integer(unsigned(data_addr))+1) <= data_in(2*data_width-1 downto data_width);
-            end if;
+            end if; 
 
         else
             data_out <= std_logic_vector(to_unsigned(0, data_width*4));
