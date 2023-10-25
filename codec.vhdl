@@ -32,7 +32,6 @@ begin
         if interrupt = '1' then
             if read_signal = '1' and write_signal = '0' and not endfile(file_input) then -- opcode IN
                 readline(file_input, text_line);
-
                 if text_line'length > 0 then
                     read(text_line, text_number);
                     codec_data_out <= std_logic_vector(to_signed(text_number, 8));

@@ -24,23 +24,28 @@ architecture behavioral of memory is
     subtype data_word is std_logic_vector(data_width-1 downto 0);
     type data_memory is array (0 to (2**addr_width)-1) of data_word;
     signal ram : data_memory := (others => (others => '0'));
+    signal output : std_logic_vector((data_width*4)-1 downto 0) := (others => '0');
 begin
 
     -- Edge-triggered random access memory
     process (clock)
+        variable index: integer range 0 to 65535;
     begin
-        data_out <= std_logic_vector(to_unsigned(0, data_width*4));
+        if clock'event and clock = '0' then
+            index := to_integer(unsigned(data_addr));
 
-        if clock = '0' then
             if data_read = '1' and data_write = '0' then
-                data_out <= ram(to_integer(unsigned(data_addr))+3) & ram(to_integer(unsigned(data_addr))+2) & ram(to_integer(unsigned(data_addr))+1) & ram(to_integer(unsigned(data_addr)));
+                output <= ram(index+3) & ram(index+2) & ram(index+1) & ram(index);
             elsif data_read = '0' and data_write = '1' then
-                ram(to_integer(unsigned(data_addr))) <= data_in(data_width-1 downto 0);
-                ram(to_integer(unsigned(data_addr))+1) <= data_in(2*data_width-1 downto data_width);
+                ram(index) <= data_in(data_width-1 downto 0);
+                ram(index+1) <= data_in(2*data_width-1 downto data_width);
+                output <= std_logic_vector(to_unsigned(0, data_width*4));
             end if; 
       
         end if;
         
     end process;
+
+    data_out <= output;
 
 end architecture;

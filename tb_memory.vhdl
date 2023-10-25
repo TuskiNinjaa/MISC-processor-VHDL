@@ -25,28 +25,36 @@ begin
             data_out : std_logic_vector((data_width*4)-1 downto 0);
         end record;
 
-        type vetor_tabela_verdade is array (0 to 11) of colunas_tabela_verdade;
+        type vetor_tabela_verdade is array (0 to 20) of colunas_tabela_verdade;
 
         -- Implement more test cases
         constant tabela_verdade : vetor_tabela_verdade := (
+            ('1', '0', '1', x"0000", x"0000", x"00000000"),
             ('0', '0', '1', x"0010", x"1234", x"00000000"),
             ('1', '0', '1', x"0010", x"1234", x"00000000"),
             ('0', '1', '0', x"0010", x"0000", x"00001234"),
-            ('1', '1', '0', x"0010", x"0000", x"00000000"),
+            ('1', '1', '0', x"0010", x"0000", x"00001234"),
             ('0', '1', '0', x"000F", x"0000", x"00123400"),
-            ('1', '1', '0', x"000F", x"0000", x"00000000"),
+            ('1', '1', '0', x"000F", x"0000", x"00123400"),
             ('0', '1', '0', x"000E", x"0000", x"12340000"),
-            ('1', '1', '0', x"000E", x"0000", x"00000000"),
+            ('1', '1', '0', x"000E", x"0000", x"12340000"),
             ('0', '0', '1', x"000E", x"5566", x"00000000"),
             ('1', '0', '1', x"000E", x"5566", x"00000000"),
             ('0', '1', '0', x"000E", x"0000", x"12345566"),
-            ('1', '1', '0', x"000E", x"0000", x"00000000")
+            ('1', '1', '0', x"000E", x"0000", x"12345566"),
+            ('0', '0', '1', x"FFFE", x"5824", x"00000000"),
+            ('1', '0', '1', x"FFFE", x"5824", x"00000000"),
+            ('0', '1', '0', x"FFFC", x"0000", x"58240000"),
+            ('1', '1', '0', x"FFFC", x"0000", x"58240000"),
+            ('0', '0', '1', x"0000", x"7895", x"00000000"),
+            ('1', '0', '1', x"0000", x"7895", x"00000000"),
+            ('0', '1', '0', x"0000", x"0000", x"00007895"),
+            ('1', '1', '0', x"0000", x"0000", x"00007895")
         );
 
     begin
-
         for i in tabela_verdade'range loop
-            clock <= tabela_verdade(i).clock;
+            clock <=  tabela_verdade(i).clock;
             data_read <= tabela_verdade(i).data_read;
             data_write <= tabela_verdade(i).data_write;
             data_addr <= tabela_verdade(i).data_addr;
