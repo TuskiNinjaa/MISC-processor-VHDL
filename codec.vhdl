@@ -30,7 +30,8 @@ begin
         text_line := null;
 
         if interrupt = '1' then
-            if read_signal = '1' and write_signal = '0' and not endfile(file_input) then -- opcode IN
+            if read_signal = '1' and write_signal = '0' and not endfile(file_input) then 
+                -- opcode IN
                 readline(file_input, text_line);
                 if text_line'length > 0 then
                     read(text_line, text_number);
@@ -38,7 +39,8 @@ begin
                     valid <= '1';
                 end if;
                 
-            elsif read_signal = '0' and write_signal = '1' then -- opcode OUT
+            elsif read_signal = '0' and write_signal = '1' then 
+                -- opcode OUT
                 write(text_line, to_integer(signed(codec_data_in)));
                 writeline(file_output, text_line);
                 valid <= '1';
