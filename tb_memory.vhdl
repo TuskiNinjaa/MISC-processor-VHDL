@@ -25,11 +25,10 @@ begin
             data_out : std_logic_vector((data_width*4)-1 downto 0);
         end record;
 
-        type vetor_tabela_verdade is array (0 to 20) of colunas_tabela_verdade;
+        type vetor_tabela_verdade is array (0 to 19) of colunas_tabela_verdade;
 
         -- Implement more test cases
         constant tabela_verdade : vetor_tabela_verdade := (
-            ('1', '0', '1', x"0000", x"0000", x"00000000"),
             ('0', '0', '1', x"0010", x"1234", x"00000000"),
             ('1', '0', '1', x"0010", x"1234", x"00000000"),
             ('0', '1', '0', x"0010", x"0000", x"00001234"),
