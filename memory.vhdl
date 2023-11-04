@@ -29,9 +29,9 @@ begin
 
     -- Edge-triggered random access memory
     process (clock)
-        variable index: integer range 0 to 65535;
+        variable index: integer range 0 to (2**addr_width)-1;
     begin
-        if clock'event and clock = '0' then
+        if clock'event and clock='0' then
             index := to_integer(unsigned(data_addr));
 
             if data_read = '1' and data_write = '0' then

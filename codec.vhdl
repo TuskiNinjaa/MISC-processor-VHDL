@@ -17,8 +17,8 @@ entity codec is
 end entity;
 
 architecture behavioral of codec is
-    file file_input : text open read_mode is "input.txt";
-    file file_output : text open write_mode is "output.txt";
+    file file_input : text open read_mode is "input.bin";
+    file file_output : text open write_mode is "output.bin";
 begin
 
     process (interrupt)
