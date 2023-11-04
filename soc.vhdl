@@ -64,7 +64,7 @@ begin
                 
                 case text_word is
                     when "HLT    " =>
-                        imem_data_in <= x"AAAA";
+                        imem_data_in <= x"0000";
                     when "IN     " =>
                         imem_data_in <= x"0100";
                     when "OUT    " =>
