@@ -10,8 +10,8 @@ architecture hibrida of tb_codec is
     signal codec_data_in, codec_data_out : std_logic_vector(7 downto 0);
 
 begin
-    cod :   entity work.codec(behavioral)
-            port map (interrupt => interrupt, read_signal => read_signal, write_signal => write_signal, valid => valid, codec_data_in => codec_data_in, codec_data_out => codec_data_out);
+    cod : entity work.codec(behavioral)
+        port map (interrupt => interrupt, read_signal => read_signal, write_signal => write_signal, valid => valid, codec_data_in => codec_data_in, codec_data_out => codec_data_out);
         
     estimulo_checagem : process is
         type colunas_tabela_verdade is record

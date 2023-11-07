@@ -1,5 +1,3 @@
--- Implementar para Versão 2
-
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -37,3 +35,13 @@ entity cpu is
         ---- End Codec Signals ---
     );
 end entity;
+
+-- architecture behavioral of cpu is
+-- begin
+--     process (clock)
+--     begin
+--         if halt = '0' and clock'event and clock='1' then
+            
+--         end if;
+--     end process;
+-- end architecture;

@@ -13,9 +13,9 @@ architecture hibrida of tb_memory is
     signal data_in : std_logic_vector((data_width*2)-1 downto 0);
     signal data_out : std_logic_vector((data_width*4)-1 downto 0);
 begin
-    mem :   entity work.memory(behavioral)
-            generic map (addr_width => addr_width, data_width => data_width)
-            port map (clock => clock, data_read => data_read, data_write => data_write, data_addr => data_addr, data_in => data_in, data_out => data_out);
+    mem : entity work.memory(behavioral)
+        generic map (addr_width => addr_width, data_width => data_width)
+        port map (clock => clock, data_read => data_read, data_write => data_write, data_addr => data_addr, data_in => data_in, data_out => data_out);
         
     estimulo_checagem : process is
         type colunas_tabela_verdade is record
