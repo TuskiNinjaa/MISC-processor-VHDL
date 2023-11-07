@@ -91,5 +91,3 @@ def main():
 if __name__ == "__main__":
     main()
     sys.exit(0)
-
-# python compiler.py bin/code.bin bin/firmware.bin

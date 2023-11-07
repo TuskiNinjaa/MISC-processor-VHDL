@@ -6,9 +6,9 @@ entity tb_soc is
 end;
 
 architecture hibrida of tb_soc is
-    constant firmware_filename : string := "firmware.bin";
+    constant firmware_filename : string := "bin/firmware.bin";
     constant quantity_instruction : integer := 15;
-    signal clock, started : std_logic;
+    signal clock, started : std_logic := '0';
 begin
     soc : entity work.soc(structural)
         generic map (firmware_filename => firmware_filename)
