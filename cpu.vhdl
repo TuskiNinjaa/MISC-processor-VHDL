@@ -1,5 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
+library work;
+use work.opcode.all;
 
 entity cpu is
     generic (
@@ -36,12 +38,12 @@ entity cpu is
     );
 end entity;
 
--- architecture behavioral of cpu is
--- begin
---     process (clock)
---     begin
---         if halt = '0' and clock'event and clock='1' then
-            
---         end if;
---     end process;
--- end architecture;
+architecture behavioral of cpu is
+begin
+    -- process (clock)
+    -- begin
+    --     if halt /= '1' and clock'event and clock='1' then
+    --         report "ola";
+    --     end if;
+    -- end process;
+end architecture;

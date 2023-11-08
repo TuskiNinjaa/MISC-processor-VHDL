@@ -48,6 +48,32 @@ architecture structural of soc is
 
 
 begin
+    process (started)
+    begin
+    end process;
+
+    process (clock) -- process to fill IMEM
+        variable text_line : line;
+        variable c : character;
+    begin
+        if not endfile(firmware) and clock'event and clock='1' then
+            readline(firmware, text_line);
+            for i in 0 to data_width-1 loop
+                read(text_line, c);
+                if c = '0' then
+                    imem_data_in(data_width-1-i) <= '0';
+                else
+                    imem_data_in(data_width-1-i) <= '1';
+                end if;
+            end loop;
+            
+            imem_data_read <= '0';
+            imem_data_write <= '1';
+            imem_data_addr <= std_logic_vector(to_unsigned(final_instruction_pointer, addr_width));
+            final_instruction_pointer <= final_instruction_pointer + 1;
+        end if;
+    end process;
+
     imem : entity work.memory(behavioral)
         generic map (
             addr_width => addr_width,
@@ -86,26 +112,24 @@ begin
             codec_data_out  => codec_data_out
         );
 
-    process (clock)-- process to fill IMEM
-        variable text_line : line;
-        variable c : character;
-    begin
-        if not endfile(firmware) and clock'event and clock='1' then
-            readline(firmware, text_line);
-            for i in 0 to data_width-1 loop
-                read(text_line, c);
-                if c = '0' then
-                    imem_data_in(data_width-1-i) <= '0';
-                else
-                    imem_data_in(data_width-1-i) <= '1';
-                end if;
-            end loop;
-            
-            imem_data_read <= '0';
-            imem_data_write <= '1';
-            imem_data_addr <= std_logic_vector(to_unsigned(final_instruction_pointer, addr_width));
-            final_instruction_pointer <= final_instruction_pointer + 1;
-        end if;
-    end process;
-
+    -- cpu : entity work.cpu(structural)
+    --     generic map (addr_width => addr_width, data_width => data_width)
+    --     port map (
+    --         clock => clock,
+    --         halt => started,
+    --         instruction_in => instruction_in,
+    --         instruction_addr => instruction_addr,
+    --         mem_data_read => dmem_data_read,
+    --         mem_data_write => dmem_data_write,
+    --         mem_data_addr => dmem_data_addr,
+    --         mem_data_in => dmem_data_in,
+    --         mem_data_out => dmem_data_out,
+    --         codec_interrupt => codec_interrupt,
+    --         codec_read => codec_read_signal,
+    --         codec_write => codec_write_signal,
+    --         codec_valid => codec_valid,
+    --         codec_data_out => codec_data_out,
+    --         codec_data_in => codec_data_in
+    --     );
+    
 end architecture;

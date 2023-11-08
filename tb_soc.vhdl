@@ -7,7 +7,7 @@ end;
 
 architecture hibrida of tb_soc is
     constant firmware_filename : string := "bin/firmware.bin";
-    constant quantity_instruction : integer := 15;
+    constant quantity_instruction : integer := 30;
     signal clock, started : std_logic := '0';
 begin
     soc : entity work.soc(structural)

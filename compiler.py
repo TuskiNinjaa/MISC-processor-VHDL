@@ -65,19 +65,27 @@ class Compiler:
     def compile(self):
         try:
             for token in self.lexer.lex(self.reader.read().upper()):
-                    if token.name == "IMMEDIATE":
-                        out = bin(~int(token.value) + 1)
-                        self.writer.write(str(out)[2:])
-                    elif token.name == "LINE_BREAK" or token.name == "EMPTY":
-                        self.writer.write(token.value)
-                    elif token.name == "PUSH":
-                        self.writer.write(self.opcode[token.name])
-                    else:
-                        self.writer.write(self.opcode[token.name])
-                        self.writer.write(self.opcode["ZERO"])
+                if token.name == "IMMEDIATE":
+                    number = int(token.value)
+
+                    assert number >= -8 and number <= 7, "At line %d. Immediate %d is out of the 4 bit range with two's compliment." %(token.getsourcepos().lineno, number)
+                    
+                    if number < 0:
+                        number = ~number
+                        number = number + (8-number)*2 - 1
+                    self.writer.write(format(number, '04b'))
+                elif token.name == "LINE_BREAK" or token.name == "EMPTY":
+                    self.writer.write(token.value)
+                elif token.name == "PUSH":
+                    self.writer.write(self.opcode[token.name])
+                else:
+                    self.writer.write(self.opcode[token.name])
+                    self.writer.write(self.opcode["ZERO"])
 
         except LexingError as error:
             print("LexicalError: At line %d." % token.getsourcepos().lineno)
+        except AssertionError as error:
+            print("AssertionError: %s"%error.args[0])
 
 def main():
     try:
