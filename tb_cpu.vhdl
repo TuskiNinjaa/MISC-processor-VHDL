@@ -53,9 +53,9 @@ begin
                 '1', '1', '0', '1', x"0C", x"00" -- Read CODEC
             )
             ,(
-                '0', x"10", x"0001", -- IN
-                '0', '1', x"0001", x"00F3", x"00000000", -- Write DMEM
-                '1', '1', '0', '1', x"F3", x"00"-- Read CODEC
+                '0', x"00", x"0001", -- IN
+                '0', '1', x"0001", x"00F3", x"00000000",
+                '1', '1', '0', '1', x"F3", x"00"
             )
             -- ,(
             --     '0', x"20", x"0002", -- OUT
@@ -69,9 +69,11 @@ begin
         );
 
     begin
-        for i in 0 to tabela_verdade'length-1 loop
-            halt <= tabela_verdade(i).halt;
-            instruction_in <= tabela_verdade(i).instruction_in;
+        for i in 0 to 2*tabela_verdade'length-1 loop
+            if i >= 0 and i < tabela_verdade'length then
+                halt <= tabela_verdade(i).halt;
+                instruction_in <= tabela_verdade(i).instruction_in;
+            end if;
 
             clock <= '1';
             wait for 1 ns;
