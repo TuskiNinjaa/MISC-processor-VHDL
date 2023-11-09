@@ -25,8 +25,8 @@ begin
         variable text_line : line;
         variable text_number : integer;
     begin
-        valid <= '0';
-        codec_data_out <= std_logic_vector(to_unsigned(0, 8));
+        -- valid <= '0';
+        -- codec_data_out <= std_logic_vector(to_unsigned(0, 8));
         text_line := null;
 
         if interrupt = '1' then

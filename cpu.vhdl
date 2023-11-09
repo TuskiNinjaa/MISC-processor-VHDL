@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 library work;
 use work.opcode.all;
 
@@ -39,11 +40,111 @@ entity cpu is
 end entity;
 
 architecture behavioral of cpu is
+    signal stack_pointer, instruction_pointer : natural := 0;
 begin
-    -- process (clock)
-    -- begin
-    --     if halt /= '1' and clock'event and clock='1' then
-    --         report "ola";
-    --     end if;
-    -- end process;
+    process (clock)
+    begin
+        if halt /= '1' and clock'event and clock='1' then
+            if instruction_in = type_in then
+                codec_interrupt <= '1';
+                codec_read <= '1';
+                codec_write <= '0';
+                codec_data_in <= std_logic_vector(to_unsigned(0, data_width));
+
+                mem_data_read <= '0';
+                mem_data_write <= '0';
+                mem_data_addr <= std_logic_vector(to_unsigned(0, addr_width));
+                mem_data_in <= std_logic_vector(to_unsigned(0, 2*data_width));
+
+                if codec_valid = '1' then
+                    mem_data_read <= '0';
+                    mem_data_write <= '1';
+                    mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer, addr_width));
+                    mem_data_in(data_width-1 downto 0) <= codec_data_out;
+                    mem_data_in(2*data_width-1 downto data_width) <= std_logic_vector(to_unsigned(0, data_width));
+
+                    stack_pointer <= stack_pointer + 1;
+                    codec_interrupt <= '0';
+                end if;
+
+                instruction_pointer <= instruction_pointer + 1;
+            elsif instruction_in = type_out then
+                report "OUT implementation";
+                -- mem_data_read <= '1';
+                -- mem_data_write <= '0';
+                -- mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer-1, addr_width));
+                -- mem_data_in <= std_logic_vector(to_unsigned(0, 2*data_width));
+
+                -- codec_interrupt <= '1';
+                -- codec_read <= '0';
+                -- codec_write <= '1';
+                -- codec_data_in <= mem_data_out(data_width-1 downto 0);
+
+                -- stack_pointer <= stack_pointer - 1;
+                -- instruction_pointer <= instruction_pointer + 1;
+
+            elsif instruction_in = type_slt then
+                report "SLT implementation";
+            elsif instruction_in = type_shl then
+                report "SHL implementation";
+            elsif instruction_in = type_shr then
+                report "SHR implementation";
+            elsif instruction_in = type_jeq then
+                report "JEQ implementation";
+            elsif instruction_in = type_jmp then
+                report "JMP implementation";
+            else
+                report "Others implementation";
+            end if;
+
+        -- elsif halt /= '1' and clock'event and clock='0' then
+        --     if instruction_in = type_in then
+
+        --         if codec_valid = '1' then
+        --             mem_data_read <= '0';
+        --             mem_data_write <= '1';
+        --             mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer, addr_width));
+        --             mem_data_in(data_width-1 downto 0) <= codec_data_out;
+        --             mem_data_in(2*data_width-1 downto data_width) <= std_logic_vector(to_unsigned(0, data_width));
+
+        --             stack_pointer <= stack_pointer + 1;
+        --             codec_interrupt <= '0';
+        --         end if;
+
+        --         instruction_pointer <= instruction_pointer + 1;
+
+        --     elsif instruction_in = type_out then
+        --         report "OUT implementation";
+        --         -- mem_data_read <= '1';
+        --         -- mem_data_write <= '0';
+        --         -- mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer-1, addr_width));
+        --         -- mem_data_in <= std_logic_vector(to_unsigned(0, 2*data_width));
+
+        --         -- codec_interrupt <= '1';
+        --         -- codec_read <= '0';
+        --         -- codec_write <= '1';
+        --         -- codec_data_in <= mem_data_out(data_width-1 downto 0);
+
+        --         -- stack_pointer <= stack_pointer - 1;
+        --         -- instruction_pointer <= instruction_pointer + 1;
+
+        --     elsif instruction_in = type_slt then
+        --         report "SLT implementation";
+        --     elsif instruction_in = type_shl then
+        --         report "SHL implementation";
+        --     elsif instruction_in = type_shr then
+        --         report "SHR implementation";
+        --     elsif instruction_in = type_jeq then
+        --         report "JEQ implementation";
+        --     elsif instruction_in = type_jmp then
+        --         report "JMP implementation";
+        --     else
+        --         report "Others implementation";
+        --     end if;
+        end if;
+
+        instruction_addr <= std_logic_vector(to_unsigned(instruction_pointer, addr_width));
+    end process;
+
+
 end architecture;

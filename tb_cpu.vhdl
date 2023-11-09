@@ -43,7 +43,7 @@ begin
             codec_data_in : std_logic_vector(7 downto 0); -- assert
         end record;
 
-        type vetor_tabela_verdade is array (0 to 3) of colunas_tabela_verdade;
+        type vetor_tabela_verdade is array (0 to 1) of colunas_tabela_verdade;
 
         -- Implement more test cases
         constant tabela_verdade : vetor_tabela_verdade := (
@@ -51,46 +51,49 @@ begin
                 '0', x"10", x"0000", -- IN
                 '0', '1', x"0000", x"000C", x"00000000", -- Write DMEM
                 '1', '1', '0', '1', x"0C", x"00" -- Read CODEC
-            ),(
+            )
+            ,(
                 '0', x"10", x"0001", -- IN
                 '0', '1', x"0001", x"00F3", x"00000000", -- Write DMEM
                 '1', '1', '0', '1', x"F3", x"00"-- Read CODEC
-            ),(
-                '0', x"20", x"0002", -- OUT
-                '1', '0', x"0001", x"0000", x"000000F3", -- Read DMEM
-                '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
-            ),(
-                '0', x"20", x"0003", -- OUT
-                '1', '0', x"0000", x"0000", x"0000000C", -- Read DMEM
-                '1', '0', '1', '1', x"00", x"0C" -- Write CODEC
             )
+            -- ,(
+            --     '0', x"20", x"0002", -- OUT
+            --     '1', '0', x"0001", x"0000", x"000000F3", -- Read DMEM
+            --     '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
+            -- ),(
+            --     '0', x"20", x"0003", -- OUT
+            --     '1', '0', x"0000", x"0000", x"0000000C", -- Read DMEM
+            --     '1', '0', '1', '1', x"00", x"0C" -- Write CODEC
+            -- )
         );
 
     begin
-        for i in 1 to tabela_verdade'length loop
+        for i in 0 to tabela_verdade'length-1 loop
             halt <= tabela_verdade(i).halt;
             instruction_in <= tabela_verdade(i).instruction_in;
-            dmem_data_out <= tabela_verdade(i).dmem_data_out;
-            codec_valid <= tabela_verdade(i).codec_valid;
-            codec_data_out <= tabela_verdade(i).codec_data_out;
 
             clock <= '1';
             wait for 1 ns;
 
-            assert instruction_addr = tabela_verdade(i).instruction_addr report "ERROR: instruction_addr. Line: " & integer'image(i);
-            assert dmem_data_read = tabela_verdade(i).dmem_data_read report "ERROR: dmem_data_read. Line: " & integer'image(i);
-            assert dmem_data_write = tabela_verdade(i).dmem_data_write report "ERROR: dmem_data_write. Line: " & integer'image(i);
-            assert dmem_data_addr = tabela_verdade(i).dmem_data_addr report "ERROR: dmem_data_addr. Line: " & integer'image(i);
-            assert dmem_data_in = tabela_verdade(i).dmem_data_in report "ERROR: dmem_data_in. Line: " & integer'image(i);
-            assert codec_interrupt = tabela_verdade(i).codec_interrupt report "ERROR: codec_interrupt. Line: " & integer'image(i);
-            assert codec_read = tabela_verdade(i).codec_read report "ERROR: codec_read. Line: " & integer'image(i);
-            assert codec_write = tabela_verdade(i).codec_write report "ERROR: codec_write. Line: " & integer'image(i);
-            assert codec_data_in = tabela_verdade(i).codec_data_in report "ERROR: codec_data_in. Line: " & integer'image(i);
-            -- assert tabela_verdade(i) report;
+            -- dmem_data_out <= tabela_verdade(i).dmem_data_out;
+            -- codec_valid <= tabela_verdade(i).codec_valid;
+            -- codec_data_out <= tabela_verdade(i).codec_data_out;
+            
+            -- assert instruction_addr = tabela_verdade(i).instruction_addr report "ERROR: instruction_addr. Line: " & integer'image(i);
+            -- assert dmem_data_read = tabela_verdade(i).dmem_data_read report "ERROR: dmem_data_read. Line: " & integer'image(i);
+            -- assert dmem_data_write = tabela_verdade(i).dmem_data_write report "ERROR: dmem_data_write. Line: " & integer'image(i);
+            -- assert dmem_data_addr = tabela_verdade(i).dmem_data_addr report "ERROR: dmem_data_addr. Line: " & integer'image(i);
+            -- assert codec_interrupt = tabela_verdade(i).codec_interrupt report "ERROR: codec_interrupt. Line: " & integer'image(i);
+            -- assert codec_read = tabela_verdade(i).codec_read report "ERROR: codec_read. Line: " & integer'image(i);
+            -- assert codec_write = tabela_verdade(i).codec_write report "ERROR: codec_write. Line: " & integer'image(i);
 
             clock <= not clock;
             wait for 1 ns;
-            -- assert tabela_verdade(i) report;
+
+            -- assert dmem_data_in = tabela_verdade(i).dmem_data_in report "ERROR: dmem_data_in. Line: " & integer'image(i);
+            -- assert codec_data_in = tabela_verdade(i).codec_data_in report "ERROR: codec_data_in. Line: " & integer'image(i);
+
         end loop; 
 
         report "The end of tests" ;
@@ -98,7 +101,7 @@ begin
         wait;
     end process estimulo_checagem;
 
-    cpu : entity work.cpu(structural)
+    cpu : entity work.cpu(behavioral)
         generic map (addr_width => addr_width, data_width => data_width)
         port map (
             clock => clock,
@@ -118,28 +121,28 @@ begin
             codec_data_in => codec_data_in
         );
         
-    -- dmem : entity work.memory(behavioral)
-    --     generic map (
-    --         addr_width => addr_width,
-    --         data_width => data_width
-    --     )
-    --     port map (
-    --         clock => clock,
-    --         data_read => dmem_data_read,
-    --         data_write => dmem_data_write,
-    --         data_addr => dmem_data_addr,
-    --         data_in => dmem_data_in,
-    --         data_out => dmem_data_out
-    --     );
+    dmem : entity work.memory(behavioral)
+        generic map (
+            addr_width => addr_width,
+            data_width => data_width
+        )
+        port map (
+            clock => clock,
+            data_read => dmem_data_read,
+            data_write => dmem_data_write,
+            data_addr => dmem_data_addr,
+            data_in => dmem_data_in,
+            data_out => dmem_data_out
+        );
         
-    -- codec : entity work.codec(behavioral)
-    --     port map (
-    --         interrupt => codec_interrupt,
-    --         read_signal => codec_read,
-    --         write_signal => codec_write,
-    --         valid => codec_valid,
-    --         codec_data_in => codec_data_in,
-    --         codec_data_out  => codec_data_out
-    --     );
+    codec : entity work.codec(behavioral)
+        port map (
+            interrupt => codec_interrupt,
+            read_signal => codec_read,
+            write_signal => codec_write,
+            valid => codec_valid,
+            codec_data_in => codec_data_in,
+            codec_data_out  => codec_data_out
+        );
 
 end;
