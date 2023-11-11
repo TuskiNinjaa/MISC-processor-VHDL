@@ -1,6 +1,7 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
+
 LIBRARY work;
 USE work.opcode.ALL;
 
@@ -64,6 +65,8 @@ BEGIN
     END PROCESS;
 
     PROCESS (current_state, halt) -- State machine
+        VARIABLE op1, op2 : STD_LOGIC_VECTOR(data_width - 1 DOWNTO 0);
+        VARIABLE op3 : STD_LOGIC_VECTOR(2 * data_width - 1 DOWNTO 0);
     BEGIN
         CASE current_state IS
             WHEN fetch =>
@@ -80,24 +83,46 @@ BEGIN
                 END IF;
 
             WHEN decode_load =>
-                upcoming_state <= execute_store;
-
-                IF halt = '1' OR is_equal(instruction_in, type_hlt) THEN
+                IF halt = '1' THEN
                     -- Go to halted state
                     upcoming_state <= halted;
+
+                ELSIF is_equal(instruction_in, type_hlt) THEN
+                    -- Load 0 byte from DMEM
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '0';
+                    upcoming_state <= execute_store;
 
                 ELSIF is_equal(instruction_in, type_in) THEN
                     -- Read from CODEC
                     temp_codec_interrupt <= '1';
                     temp_codec_read <= '1';
                     temp_codec_write <= '0';
+                    upcoming_state <= execute_store;
 
-                ELSE
-                    -- Load from DMEM
+                ELSIF is_equal(instruction_in, type_out) THEN
+                    -- Load 1 byte from DMEM
                     temp_mem_data_read <= '1';
                     temp_mem_data_write <= '0';
                     temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer - 1, addr_width));
                     stack_pointer <= stack_pointer - 1;
+                    upcoming_state <= execute_store;
+
+                ELSIF is_equal(instruction_in, type_jeq) THEN
+                    -- Load 4 byte from DMEM
+                    temp_mem_data_read <= '1';
+                    temp_mem_data_write <= '0';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer - 4, addr_width));
+                    stack_pointer <= stack_pointer - 4;
+                    upcoming_state <= execute_store;
+
+                ELSE
+                    -- Load 2 bytes from DMEM
+                    temp_mem_data_read <= '1';
+                    temp_mem_data_write <= '0';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer - 2, addr_width));
+                    stack_pointer <= stack_pointer - 2;
+                    upcoming_state <= execute_store;
 
                 END IF;
 
@@ -108,12 +133,16 @@ BEGIN
                     -- Go to halted state
                     upcoming_state <= halted;
 
+                ELSIF is_equal(instruction_in, type_hlt) THEN
+                    upcoming_state <= halted;
+                    instruction_pointer <= instruction_pointer + 1;
+
                 ELSIF is_equal(instruction_in, type_in) THEN
                     IF codec_valid = '1' THEN
                         temp_mem_data_read <= '0';
                         temp_mem_data_write <= '1';
                         temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                        temp_mem_data_in(data_width - 1 DOWNTO 0) <= codec_data_out;
+                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & codec_data_out;
                         stack_pointer <= stack_pointer + 1;
                     END IF;
 
@@ -126,6 +155,69 @@ BEGIN
                     temp_codec_data_in <= mem_data_out(data_width - 1 DOWNTO 0);
 
                     instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_slt) THEN
+                    op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
+                    op2 := mem_data_out(data_width - 1 DOWNTO 0);
+
+                    IF to_integer(unsigned(op1)) < to_integer(unsigned(op2)) THEN
+                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(1, data_width * 2));
+                    ELSE
+                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width * 2));
+                    END IF;
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_shl) THEN
+                    REPORT "SHL Implementation";
+                    op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
+                    op2 := mem_data_out(data_width - 1 DOWNTO 0);
+                    op1 := STD_LOGIC_VECTOR(shift_left(unsigned(op1), to_integer(unsigned(op2))));
+
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_shr) THEN
+                    REPORT "SHR Implementation";
+                    op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
+                    op2 := mem_data_out(data_width - 1 DOWNTO 0);
+                    op1 := STD_LOGIC_VECTOR(shift_right(unsigned(op1), to_integer(unsigned(op2))));
+
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_jeq) THEN
+                    op1 := mem_data_out(4 * data_width - 1 DOWNTO 3 * data_width);
+                    op2 := mem_data_out(3 * data_width - 1 DOWNTO 2 * data_width);
+                    op3 := mem_data_out(2 * data_width - 1 DOWNTO 0);
+
+                    IF to_integer(unsigned(op1)) = to_integer(unsigned(op2)) THEN
+                        instruction_pointer <= to_integer(unsigned(op3));
+                    ELSE
+                        instruction_pointer <= instruction_pointer + 1;
+                    END IF;
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '0';
+
+                ELSIF is_equal(instruction_in, type_jmp) THEN
+                    op3 := mem_data_out(2 * data_width - 1 DOWNTO 0);
+                    instruction_pointer <= to_integer(unsigned(op3));
 
                 END IF;
 
