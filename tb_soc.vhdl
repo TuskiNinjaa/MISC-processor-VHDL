@@ -1,31 +1,31 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
 
-entity tb_soc is
-end;
+ENTITY tb_soc IS
+END;
 
-architecture hibrida of tb_soc is
-    constant firmware_filename : string := "bin/firmware.bin";
-    constant quantity_instruction : integer := 30;
-    signal clock, started : std_logic := '0';
-begin
-    soc : entity work.soc(structural)
-        generic map (firmware_filename => firmware_filename)
-        port map (clock => clock, started => started);
+ARCHITECTURE hibrida OF tb_soc IS
+    CONSTANT firmware_filename : STRING := "bin/firmware.bin";
+    CONSTANT quantity_instruction : INTEGER := 30;
+    SIGNAL clock, started : STD_LOGIC := '0';
+BEGIN
+    soc : ENTITY work.soc(structural)
+        GENERIC MAP(firmware_filename => firmware_filename)
+        PORT MAP(clock => clock, started => started);
 
-    estimulo_checagem : process is
-        
-    begin
-        for i in 1 to quantity_instruction loop
+    estimulo_checagem : PROCESS IS
+
+    BEGIN
+        FOR i IN 1 TO quantity_instruction LOOP
             clock <= '1';
-            wait for 1 ns;
-            clock <= not clock;
-            wait for 1 ns;
-        end loop; 
+            WAIT FOR 1 ns;
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
+        END LOOP;
 
-        report "The end of tests" ;
+        REPORT "The end of tests";
 
-        wait;
-    end process estimulo_checagem;
-end;
+        WAIT;
+    END PROCESS estimulo_checagem;
+END;

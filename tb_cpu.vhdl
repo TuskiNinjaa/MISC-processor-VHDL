@@ -1,111 +1,129 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
 
-entity tb_cpu is
-end;
+ENTITY tb_cpu IS
+END;
 
-architecture hibrida of tb_cpu is
-    constant addr_width : natural := 16;
-    constant data_width : natural := 8;
+ARCHITECTURE hibrida OF tb_cpu IS
+    CONSTANT addr_width : NATURAL := 16;
+    CONSTANT data_width : NATURAL := 8;
 
-    signal clock : std_logic := '0';
-    signal halt : std_logic;
-    signal instruction_in : std_logic_vector(data_width-1 downto 0);
-    signal instruction_addr: std_logic_vector(addr_width-1 downto 0);
-    signal dmem_data_read : std_logic;
-    signal dmem_data_write: std_logic;
-    signal dmem_data_addr : std_logic_vector(addr_width-1 downto 0);
-    signal dmem_data_in : std_logic_vector((data_width*2)-1 downto 0);
-    signal dmem_data_out : std_logic_vector((data_width*4)-1 downto 0);
-    signal codec_interrupt: std_logic;
-    signal codec_read : std_logic;
-    signal codec_write : std_logic;
-    signal codec_valid : std_logic;
-    signal codec_data_out : std_logic_vector(7 downto 0);
-    signal codec_data_in : std_logic_vector(7 downto 0);
-begin
-    estimulo_checagem : process is
-        type colunas_tabela_verdade is record
-            halt : std_logic;
-            instruction_in : std_logic_vector(data_width-1 downto 0);
-            instruction_addr: std_logic_vector(addr_width-1 downto 0); -- assert
-            dmem_data_read : std_logic; -- assert
-            dmem_data_write: std_logic; -- assert
-            dmem_data_addr : std_logic_vector(addr_width-1 downto 0); -- assert
-            dmem_data_in : std_logic_vector((data_width*2)-1 downto 0); -- assert
-            dmem_data_out : std_logic_vector((data_width*4)-1 downto 0);
-            codec_interrupt: std_logic; -- assert
-            codec_read : std_logic; -- assert
-            codec_write : std_logic; -- assert
-            codec_valid : std_logic;
-            codec_data_out : std_logic_vector(7 downto 0);
-            codec_data_in : std_logic_vector(7 downto 0); -- assert
-        end record;
+    SIGNAL clock : STD_LOGIC := '0';
+    SIGNAL halt : STD_LOGIC;
+    SIGNAL instruction_in : STD_LOGIC_VECTOR(data_width - 1 DOWNTO 0);
+    SIGNAL instruction_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0);
+    SIGNAL dmem_data_read : STD_LOGIC;
+    SIGNAL dmem_data_write : STD_LOGIC;
+    SIGNAL dmem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0);
+    SIGNAL dmem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0);
+    SIGNAL dmem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0);
+    SIGNAL codec_interrupt : STD_LOGIC;
+    SIGNAL codec_read : STD_LOGIC;
+    SIGNAL codec_write : STD_LOGIC;
+    SIGNAL codec_valid : STD_LOGIC;
+    SIGNAL codec_data_out : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0);
+BEGIN
+    estimulo_checagem : PROCESS IS
+        TYPE colunas_tabela_verdade IS RECORD
+            halt : STD_LOGIC;
+            instruction_in : STD_LOGIC_VECTOR(data_width - 1 DOWNTO 0);
+            instruction_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0); -- assert
+            dmem_data_read : STD_LOGIC; -- assert
+            dmem_data_write : STD_LOGIC; -- assert
+            dmem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0); -- assert
+            dmem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0); -- assert
+            dmem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0);
+            codec_interrupt : STD_LOGIC; -- assert
+            codec_read : STD_LOGIC; -- assert
+            codec_write : STD_LOGIC; -- assert
+            codec_valid : STD_LOGIC;
+            codec_data_out : STD_LOGIC_VECTOR(7 DOWNTO 0);
+            codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0); -- assert
+        END RECORD;
 
-        type vetor_tabela_verdade is array (0 to 1) of colunas_tabela_verdade;
+        TYPE vetor_tabela_verdade IS ARRAY (0 TO 3) OF colunas_tabela_verdade;
 
         -- Implement more test cases
-        constant tabela_verdade : vetor_tabela_verdade := (
-            (
-                '0', x"10", x"0000", -- IN
-                '0', '1', x"0000", x"000C", x"00000000", -- Write DMEM
-                '1', '1', '0', '1', x"0C", x"00" -- Read CODEC
+        CONSTANT tabela_verdade : vetor_tabela_verdade := (
+        (
+            '0', x"10", x"0000", -- IN
+            '0', '1', x"0000", x"000C", x"00000000", -- Write DMEM
+            '1', '1', '0', '1', x"0C", x"00" -- Read CODEC
             )
-            ,(
-                '0', x"00", x"0001", -- IN
-                '0', '1', x"0001", x"00F3", x"00000000",
-                '1', '1', '0', '1', x"F3", x"00"
+            , (
+            '0', x"10", x"0001", -- IN
+            '0', '1', x"0001", x"00F3", x"00000000",
+            '1', '1', '0', '1', x"F3", x"00"
             )
-            -- ,(
-            --     '0', x"20", x"0002", -- OUT
-            --     '1', '0', x"0001", x"0000", x"000000F3", -- Read DMEM
-            --     '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
-            -- ),(
-            --     '0', x"20", x"0003", -- OUT
-            --     '1', '0', x"0000", x"0000", x"0000000C", -- Read DMEM
-            --     '1', '0', '1', '1', x"00", x"0C" -- Write CODEC
-            -- )
+            , (
+            '0', x"20", x"0002", -- OUT
+            '1', '0', x"0001", x"00F3", x"000000F3", -- Read DMEM
+            '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
+            )
+            , (
+            '0', x"20", x"0003", -- OUT
+            '1', '0', x"0000", x"00F3", x"0000000C", -- Read DMEM
+            '1', '0', '1', '1', x"00", x"0C" -- Write CODEC
+            )
         );
 
-    begin
-        for i in 0 to 2*tabela_verdade'length-1 loop
-            if i >= 0 and i < tabela_verdade'length then
-                halt <= tabela_verdade(i).halt;
-                instruction_in <= tabela_verdade(i).instruction_in;
-            end if;
+    BEGIN
+        halt <= '0';
 
-            clock <= '1';
-            wait for 1 ns;
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+
+        FOR i IN 0 TO tabela_verdade'length - 1 LOOP
+            halt <= tabela_verdade(i).halt;
+
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
+
+            instruction_in <= tabela_verdade(i).instruction_in;
+
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
 
             -- dmem_data_out <= tabela_verdade(i).dmem_data_out;
             -- codec_valid <= tabela_verdade(i).codec_valid;
             -- codec_data_out <= tabela_verdade(i).codec_data_out;
-            
-            -- assert instruction_addr = tabela_verdade(i).instruction_addr report "ERROR: instruction_addr. Line: " & integer'image(i);
-            -- assert dmem_data_read = tabela_verdade(i).dmem_data_read report "ERROR: dmem_data_read. Line: " & integer'image(i);
-            -- assert dmem_data_write = tabela_verdade(i).dmem_data_write report "ERROR: dmem_data_write. Line: " & integer'image(i);
-            -- assert dmem_data_addr = tabela_verdade(i).dmem_data_addr report "ERROR: dmem_data_addr. Line: " & integer'image(i);
-            -- assert codec_interrupt = tabela_verdade(i).codec_interrupt report "ERROR: codec_interrupt. Line: " & integer'image(i);
-            -- assert codec_read = tabela_verdade(i).codec_read report "ERROR: codec_read. Line: " & integer'image(i);
-            -- assert codec_write = tabela_verdade(i).codec_write report "ERROR: codec_write. Line: " & integer'image(i);
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
+            clock <= NOT clock;
+            WAIT FOR 1 ns;
 
-            clock <= not clock;
-            wait for 1 ns;
+            ASSERT instruction_addr = tabela_verdade(i).instruction_addr REPORT "ERROR: instruction_addr. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_read = tabela_verdade(i).dmem_data_read REPORT "ERROR: dmem_data_read. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_write = tabela_verdade(i).dmem_data_write REPORT "ERROR: dmem_data_write. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_addr = tabela_verdade(i).dmem_data_addr REPORT "ERROR: dmem_data_addr. Line: " & INTEGER'image(i);
+            ASSERT codec_interrupt = tabela_verdade(i).codec_interrupt REPORT "ERROR: codec_interrupt. Line: " & INTEGER'image(i);
+            ASSERT codec_read = tabela_verdade(i).codec_read REPORT "ERROR: codec_read. Line: " & INTEGER'image(i);
+            ASSERT codec_write = tabela_verdade(i).codec_write REPORT "ERROR: codec_write. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_in = tabela_verdade(i).dmem_data_in REPORT "ERROR: dmem_data_in. Line: " & INTEGER'image(i);
+            ASSERT codec_data_in = tabela_verdade(i).codec_data_in REPORT "ERROR: codec_data_in. Line: " & INTEGER'image(i);
 
-            -- assert dmem_data_in = tabela_verdade(i).dmem_data_in report "ERROR: dmem_data_in. Line: " & integer'image(i);
-            -- assert codec_data_in = tabela_verdade(i).codec_data_in report "ERROR: codec_data_in. Line: " & integer'image(i);
+        END LOOP;
 
-        end loop; 
+        REPORT "The end of tests";
 
-        report "The end of tests" ;
+        WAIT;
+    END PROCESS estimulo_checagem;
 
-        wait;
-    end process estimulo_checagem;
-
-    cpu : entity work.cpu(behavioral)
-        generic map (addr_width => addr_width, data_width => data_width)
-        port map (
+    cpu : ENTITY work.cpu(behavioral)
+        GENERIC MAP(
+            addr_width => addr_width,
+            data_width => data_width
+        )
+        PORT MAP
+        (
             clock => clock,
             halt => halt,
             instruction_in => instruction_in,
@@ -122,13 +140,13 @@ begin
             codec_data_out => codec_data_out,
             codec_data_in => codec_data_in
         );
-        
-    dmem : entity work.memory(behavioral)
-        generic map (
+
+    dmem : ENTITY work.memory(behavioral)
+        GENERIC MAP(
             addr_width => addr_width,
             data_width => data_width
         )
-        port map (
+        PORT MAP(
             clock => clock,
             data_read => dmem_data_read,
             data_write => dmem_data_write,
@@ -136,15 +154,15 @@ begin
             data_in => dmem_data_in,
             data_out => dmem_data_out
         );
-        
-    codec : entity work.codec(behavioral)
-        port map (
+
+    codec : ENTITY work.codec(behavioral)
+        PORT MAP(
             interrupt => codec_interrupt,
             read_signal => codec_read,
             write_signal => codec_write,
             valid => codec_valid,
             codec_data_in => codec_data_in,
-            codec_data_out  => codec_data_out
+            codec_data_out => codec_data_out
         );
 
-end;
+END;

@@ -1,85 +1,84 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use std.textio.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
+USE std.textio.ALL;
 
-entity soc is
-    generic (
-        firmware_filename: string := "firmware.bin"
+ENTITY soc IS
+    GENERIC (
+        firmware_filename : STRING := "firmware.bin"
     );
-    port (
-        clock: in std_logic; -- Clock signal
-        started: in std_logic -- Start execution when '1'
+    PORT (
+        clock : IN STD_LOGIC; -- Clock signal
+        started : IN STD_LOGIC -- Start execution when '1'
     );
-end entity;
+END ENTITY;
 
-architecture structural of soc is
+ARCHITECTURE structural OF soc IS
     -- constants
-    constant addr_width : natural := 16;
-    constant data_width : natural := 8;
+    CONSTANT addr_width : NATURAL := 16;
+    CONSTANT data_width : NATURAL := 8;
 
     -- firmware
-    file firmware : text open read_mode is firmware_filename;
+    FILE firmware : text OPEN read_mode IS firmware_filename;
 
     -- IMEM signals
-    signal imem_data_read, imem_data_write : std_logic := '0';
-    signal imem_data_addr : std_logic_vector(addr_width-1 downto 0) := (others => '0');
-    signal imem_data_in : std_logic_vector((data_width*2)-1 downto 0) := (others => '0');
-    signal imem_data_out : std_logic_vector((data_width*4)-1 downto 0) := (others => '0');
-    signal instruction_pointer, final_instruction_pointer : natural := 0;
+    SIGNAL imem_data_read, imem_data_write : STD_LOGIC := '0';
+    SIGNAL imem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL imem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL imem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL instruction_pointer, final_instruction_pointer : NATURAL := 0;
 
     -- DMEM signals
-    signal dmem_data_read, dmem_data_write : std_logic := '0';
-    signal dmem_data_addr : std_logic_vector(addr_width-1 downto 0) := (others => '0');
-    signal dmem_data_in : std_logic_vector((data_width*2)-1 downto 0) := (others => '0');
-    signal dmem_data_out : std_logic_vector((data_width*4)-1 downto 0) := (others => '0');
-    signal stack_pointer : natural := 0;
+    SIGNAL dmem_data_read, dmem_data_write : STD_LOGIC := '0';
+    SIGNAL dmem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL dmem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL dmem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL stack_pointer : NATURAL := 0;
 
     -- CODEC signals
-    signal codec_interrupt : std_logic := '0';
-    signal codec_read_signal : std_logic := '0';
-    signal codec_write_signal : std_logic := '0';
-    signal codec_valid : std_logic := '0';
-    signal codec_data_in : std_logic_vector(7 downto 0) := (others => '0');
-    signal codec_data_out : std_logic_vector(7 downto 0) := (others => '0');
+    SIGNAL codec_interrupt : STD_LOGIC := '0';
+    SIGNAL codec_read_signal : STD_LOGIC := '0';
+    SIGNAL codec_write_signal : STD_LOGIC := '0';
+    SIGNAL codec_valid : STD_LOGIC := '0';
+    SIGNAL codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL codec_data_out : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
 
     -- CPU signals
 
+BEGIN
+    PROCESS (started)
+    BEGIN
+    END PROCESS;
 
-
-begin
-    process (started)
-    begin
-    end process;
-
-    process (clock) -- process to fill IMEM
-        variable text_line : line;
-        variable c : character;
-    begin
-        if not endfile(firmware) and clock'event and clock='1' then
+    PROCESS (clock) -- process to fill IMEM
+        VARIABLE text_line : line;
+        VARIABLE c : CHARACTER;
+    BEGIN
+        IF NOT endfile(firmware) AND clock'event AND clock = '1' THEN
             readline(firmware, text_line);
-            for i in 0 to data_width-1 loop
+            FOR i IN 0 TO data_width - 1 LOOP
                 read(text_line, c);
-                if c = '0' then
-                    imem_data_in(data_width-1-i) <= '0';
-                else
-                    imem_data_in(data_width-1-i) <= '1';
-                end if;
-            end loop;
-            
+                IF c = '0' THEN
+                    imem_data_in(data_width - 1 - i) <= '0';
+                ELSE
+                    imem_data_in(data_width - 1 - i) <= '1';
+                END IF;
+            END LOOP;
+
             imem_data_read <= '0';
             imem_data_write <= '1';
-            imem_data_addr <= std_logic_vector(to_unsigned(final_instruction_pointer, addr_width));
+            imem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(final_instruction_pointer, addr_width));
             final_instruction_pointer <= final_instruction_pointer + 1;
-        end if;
-    end process;
+        END IF;
+    END PROCESS;
 
-    imem : entity work.memory(behavioral)
-        generic map (
+    imem : ENTITY work.memory(behavioral)
+        GENERIC MAP(
             addr_width => addr_width,
             data_width => data_width
         )
-        port map (
+        PORT MAP
+        (
             clock => clock,
             data_read => imem_data_read,
             data_write => imem_data_write,
@@ -87,13 +86,13 @@ begin
             data_in => imem_data_in,
             data_out => imem_data_out
         );
-        
-    dmem : entity work.memory(behavioral)
-        generic map (
+
+    dmem : ENTITY work.memory(behavioral)
+        GENERIC MAP(
             addr_width => addr_width,
             data_width => data_width
         )
-        port map (
+        PORT MAP(
             clock => clock,
             data_read => dmem_data_read,
             data_write => dmem_data_write,
@@ -102,14 +101,14 @@ begin
             data_out => dmem_data_out
         );
 
-    codec : entity work.codec(behavioral)
-        port map (
+    codec : ENTITY work.codec(behavioral)
+        PORT MAP(
             interrupt => codec_interrupt,
             read_signal => codec_read_signal,
             write_signal => codec_write_signal,
             valid => codec_valid,
             codec_data_in => codec_data_in,
-            codec_data_out  => codec_data_out
+            codec_data_out => codec_data_out
         );
 
     -- cpu : entity work.cpu(structural)
@@ -131,5 +130,5 @@ begin
     --         codec_data_out => codec_data_out,
     --         codec_data_in => codec_data_in
     --     );
-    
-end architecture;
+
+END ARCHITECTURE;

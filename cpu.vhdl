@@ -1,151 +1,150 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-library work;
-use work.opcode.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
+LIBRARY work;
+USE work.opcode.ALL;
 
-entity cpu is
-    generic (
-        addr_width: natural := 16; -- Memory Address Width (in bits)
-        data_width: natural := 8 -- Data Width (in bits)
+ENTITY cpu IS
+    GENERIC (
+        addr_width : NATURAL := 16; -- Memory Address Width (in bits)
+        data_width : NATURAL := 8 -- Data Width (in bits)
     );
-    port (
-        clock: in std_logic; -- Clock signal
-        halt : in std_logic; -- Halt processor execution when '1'
+    PORT (
+        clock : IN STD_LOGIC; -- Clock signal
+        halt : IN STD_LOGIC; -- Halt processor execution when '1'
         ---- Begin Memory Signals ---
         -- Instruction byte received from memory
-        instruction_in : in std_logic_vector(data_width-1 downto 0);
+        instruction_in : IN STD_LOGIC_VECTOR(data_width - 1 DOWNTO 0);
         -- Instruction address given to memory
-        instruction_addr: out std_logic_vector(addr_width-1 downto 0);
-        mem_data_read : out std_logic; -- When '1', read data from memory
-        mem_data_write: out std_logic; -- When '1', write data to memory
+        instruction_addr : OUT STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0);
+        mem_data_read : OUT STD_LOGIC; -- When '1', read data from memory
+        mem_data_write : OUT STD_LOGIC; -- When '1', write data to memory
         -- Data address given to memory
-        mem_data_addr : out std_logic_vector(addr_width-1 downto 0);
+        mem_data_addr : OUT STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0);
         -- Data sent from memory when data_read = '1' and data_write = '0'
-        mem_data_in : out std_logic_vector((data_width*2)-1 downto 0);
+        mem_data_in : OUT STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0);
         -- Data sent to memory when data_read = '0' and data_write = '1'
-        mem_data_out : in std_logic_vector((data_width*4)-1 downto 0);
+        mem_data_out : IN STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0);
         ---- End Memory Signals ---
         ---- Begin Codec Signals ---
-        codec_interrupt: out std_logic; -- Interrupt signal
-        codec_read: out std_logic; -- Read signal
-        codec_write: out std_logic; -- Write signal
-        codec_valid: in std_logic; -- Valid signal
+        codec_interrupt : OUT STD_LOGIC; -- Interrupt signal
+        codec_read : OUT STD_LOGIC; -- Read signal
+        codec_write : OUT STD_LOGIC; -- Write signal
+        codec_valid : IN STD_LOGIC; -- Valid signal
         -- Byte written to codec
-        codec_data_out : in std_logic_vector(7 downto 0);
+        codec_data_out : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
         -- Byte read from codec
-        codec_data_in : out std_logic_vector(7 downto 0)
+        codec_data_in : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
         ---- End Codec Signals ---
     );
-end entity;
+END ENTITY;
 
-architecture behavioral of cpu is
-    -- Implementar maquina de estados para CPU a fim de evitar conflito de instruções. Não da para executar tudo em apenas uma instrução
-    signal stack_pointer, instruction_pointer : natural := 0;
+ARCHITECTURE behavioral OF cpu IS
+    -- Implementar maquina de estados para CPU a fim de evitar conflito de instruções. Não da para executar tudo em apenas uma instrução. (fetch, decode, read, execute, write)
+    SIGNAL stack_pointer, instruction_pointer : NATURAL := 0;
 
-    signal temp_mem_data_read : std_logic := '0';
-    signal temp_mem_data_write: std_logic := '0';
-    signal temp_mem_data_addr : std_logic_vector(addr_width-1 downto 0) := std_logic_vector(to_unsigned(0, addr_width));
-    signal temp_mem_data_in : std_logic_vector((data_width*2)-1 downto 0):= std_logic_vector(to_unsigned(0, 2*data_width));
-    -- signal temp_codec_interrupt: std_logic;
-    -- signal temp_codec_read : std_logic;
-    -- signal temp_codec_write : std_logic;
-    -- signal temp_codec_data_in : std_logic_vector(7 downto 0);
-begin
-    process (clock)
-    begin
-        if halt /= '1' and clock'event and clock='1' then
-            if instruction_in = type_hlt then
-                report "HLT implementation";
-            elsif instruction_in = type_in then
-                codec_interrupt <= '1';
-                codec_read <= '1';
-                codec_write <= '0';
-                codec_data_in <= std_logic_vector(to_unsigned(0, data_width));
+    TYPE state IS (fetch, decode_load, execute_store, halted);
+    SIGNAL current_state, upcoming_state : state := halted;
 
-                --if codec_valid = '1' then
-                    temp_mem_data_read <= '0';
-                    temp_mem_data_write <= '1';
-                    temp_mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer, addr_width));
-                    temp_mem_data_in(data_width-1 downto 0) <= codec_data_out;
-                    temp_mem_data_in(2*data_width-1 downto data_width) <= std_logic_vector(to_unsigned(0, data_width));
+    SIGNAL temp_mem_data_read : STD_LOGIC := '0';
+    SIGNAL temp_mem_data_write : STD_LOGIC := '0';
+    SIGNAL temp_mem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := STD_LOGIC_VECTOR(to_unsigned(0, addr_width));
+    SIGNAL temp_mem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0) := STD_LOGIC_VECTOR(to_unsigned(0, 2 * data_width));
 
-                    stack_pointer <= stack_pointer + 1;
-                    codec_interrupt <= '0';
-                --end if;
+    SIGNAL temp_codec_interrupt : STD_LOGIC := '0';
+    SIGNAL temp_codec_read : STD_LOGIC := '0';
+    SIGNAL temp_codec_write : STD_LOGIC := '0';
+    SIGNAL temp_codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0) := x"00";
+BEGIN
+    PROCESS (clock) -- Synchronizing state machine
+    BEGIN
+        IF clock'event AND clock = '1' THEN
+            current_state <= upcoming_state;
+        END IF;
+    END PROCESS;
 
-                instruction_pointer <= instruction_pointer + 1;
-            elsif instruction_in = type_out then
-                report "OUT implementation";
-                -- mem_data_read <= '1';
-                -- mem_data_write <= '0';
-                -- mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer-1, addr_width));
-                -- mem_data_in <= std_logic_vector(to_unsigned(0, 2*data_width));
+    PROCESS (current_state, halt) -- State machine
+    BEGIN
+        CASE current_state IS
+            WHEN fetch =>
+                IF halt = '1' THEN
+                    -- Go to halted state
+                    upcoming_state <= halted;
 
-                -- codec_interrupt <= '1';
-                -- codec_read <= '0';
-                -- codec_write <= '1';
-                -- codec_data_in <= mem_data_out(data_width-1 downto 0);
+                ELSE
+                    -- Get instruction from IMEM
+                    temp_codec_interrupt <= '0';
+                    instruction_addr <= STD_LOGIC_VECTOR(to_unsigned(instruction_pointer, addr_width));
+                    upcoming_state <= decode_load;
 
-                -- stack_pointer <= stack_pointer - 1;
-                -- instruction_pointer <= instruction_pointer + 1;
+                END IF;
 
-            elsif instruction_in = type_slt then
-                report "SLT implementation";
-            elsif instruction_in = type_shl then
-                report "SHL implementation";
-            elsif instruction_in = type_shr then
-                report "SHR implementation";
-            elsif instruction_in = type_jeq then
-                report "JEQ implementation";
-            elsif instruction_in = type_jmp then
-                report "JMP implementation";
-            else
-                report "Others implementation";
-            end if;
+            WHEN decode_load =>
+                upcoming_state <= execute_store;
 
-        -- elsif halt /= '1' and clock'event and clock='0' then
-        --     if instruction_in = type_in then
+                IF halt = '1' OR is_equal(instruction_in, type_hlt) THEN
+                    -- Go to halted state
+                    upcoming_state <= halted;
 
-        --         if codec_valid = '1' then
-        --             temp_mem_data_read <= '0';
-        --             temp_mem_data_write <= '1';
-        --             temp_mem_data_addr <= std_logic_vector(to_unsigned(stack_pointer, addr_width));
-        --             temp_mem_data_in(data_width-1 downto 0) <= codec_data_out;
-        --             temp_mem_data_in(2*data_width-1 downto data_width) <= std_logic_vector(to_unsigned(0, data_width));
+                ELSIF is_equal(instruction_in, type_in) THEN
+                    -- Read from CODEC
+                    temp_codec_interrupt <= '1';
+                    temp_codec_read <= '1';
+                    temp_codec_write <= '0';
 
-        --             stack_pointer <= stack_pointer + 1;
-        --             codec_interrupt <= '0';
-        --         end if;
+                ELSE
+                    -- Load from DMEM
+                    temp_mem_data_read <= '1';
+                    temp_mem_data_write <= '0';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer - 1, addr_width));
+                    stack_pointer <= stack_pointer - 1;
 
-        --         instruction_pointer <= instruction_pointer + 1;
+                END IF;
 
-        --     elsif instruction_in = type_out then
-        --         report "OUT implementation";
+            WHEN execute_store =>
+                upcoming_state <= fetch;
 
-        --     elsif instruction_in = type_slt then
-        --         report "SLT implementation";
-        --     elsif instruction_in = type_shl then
-        --         report "SHL implementation";
-        --     elsif instruction_in = type_shr then
-        --         report "SHR implementation";
-        --     elsif instruction_in = type_jeq then
-        --         report "JEQ implementation";
-        --     elsif instruction_in = type_jmp then
-        --         report "JMP implementation";
-        --     else
-        --         report "Others implementation";
-        --     end if;
-        end if;
+                IF halt = '1' THEN
+                    -- Go to halted state
+                    upcoming_state <= halted;
 
-        instruction_addr <= std_logic_vector(to_unsigned(instruction_pointer, addr_width));
-    end process;
+                ELSIF is_equal(instruction_in, type_in) THEN
+                    IF codec_valid = '1' THEN
+                        temp_mem_data_read <= '0';
+                        temp_mem_data_write <= '1';
+                        temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                        temp_mem_data_in(data_width - 1 DOWNTO 0) <= codec_data_out;
+                        stack_pointer <= stack_pointer + 1;
+                    END IF;
+
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_out) THEN
+                    temp_codec_interrupt <= '1';
+                    temp_codec_read <= '0';
+                    temp_codec_write <= '1';
+                    temp_codec_data_in <= mem_data_out(data_width - 1 DOWNTO 0);
+
+                    instruction_pointer <= instruction_pointer + 1;
+
+                END IF;
+
+            WHEN halted =>
+                IF halt = '0' THEN
+                    upcoming_state <= fetch;
+                END IF;
+
+        END CASE;
+    END PROCESS;
 
     mem_data_read <= temp_mem_data_read;
     mem_data_write <= temp_mem_data_write;
     mem_data_addr <= temp_mem_data_addr;
     mem_data_in <= temp_mem_data_in;
 
+    codec_interrupt <= temp_codec_interrupt;
+    codec_read <= temp_codec_read;
+    codec_write <= temp_codec_write;
+    codec_data_in <= temp_codec_data_in;
 
-
-end architecture;
+END ARCHITECTURE;

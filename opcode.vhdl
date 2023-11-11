@@ -1,15 +1,27 @@
-library ieee;
-use ieee.std_logic_1164.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
 
-package opcode is
-    constant data_width : natural := 8;
-    constant type_hlt : std_logic_vector(data_width-1 downto 0) := x"00";
-    constant type_in : std_logic_vector(data_width-1 downto 0) := x"10";
-    constant type_out : std_logic_vector(data_width-1 downto 0) := x"20";
+PACKAGE opcode IS
+    CONSTANT size : NATURAL := 4;
+    SUBTYPE type_instruction IS STD_LOGIC_VECTOR(2 * size - 1 DOWNTO 0);
+    SUBTYPE type_opcode IS STD_LOGIC_VECTOR(size - 1 DOWNTO 0);
 
-    constant type_slt : std_logic_vector(data_width-1 downto 0) := x"B0";
-    constant type_shl : std_logic_vector(data_width-1 downto 0) := x"C0";
-    constant type_shr : std_logic_vector(data_width-1 downto 0) := x"D0";
-    constant type_jeq : std_logic_vector(data_width-1 downto 0) := x"E0";
-    constant type_jmp : std_logic_vector(data_width-1 downto 0) := x"F0";
-end package opcode;
+    CONSTANT type_hlt : type_opcode := x"0";
+    CONSTANT type_in : type_opcode := x"1";
+    CONSTANT type_out : type_opcode := x"2";
+
+    CONSTANT type_slt : type_opcode := x"B";
+    CONSTANT type_shl : type_opcode := x"C";
+    CONSTANT type_shr : type_opcode := x"D";
+    CONSTANT type_jeq : type_opcode := x"E";
+    CONSTANT type_jmp : type_opcode := x"F";
+
+    FUNCTION is_equal (instruction_word : type_instruction; opcode_word : type_opcode) RETURN BOOLEAN;
+END PACKAGE opcode;
+
+PACKAGE BODY opcode IS
+    FUNCTION is_equal (instruction_word : type_instruction; opcode_word : type_opcode) RETURN BOOLEAN IS
+    BEGIN
+        RETURN instruction_word(2 * size - 1 DOWNTO size) = opcode_word;
+    END;
+END PACKAGE BODY opcode;
