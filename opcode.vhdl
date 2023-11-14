@@ -9,7 +9,13 @@ PACKAGE opcode IS
     CONSTANT type_hlt : type_opcode := x"0";
     CONSTANT type_in : type_opcode := x"1";
     CONSTANT type_out : type_opcode := x"2";
-
+    CONSTANT type_puship : type_opcode := x"3";
+    CONSTANT type_pushim : type_opcode := x"4";
+    CONSTANT type_drop : type_opcode := x"5";
+    CONSTANT type_dup : type_opcode := x"6";
+    CONSTANT type_add : type_opcode := x"8";
+    CONSTANT type_sub : type_opcode := x"9";
+    CONSTANT type_nand : type_opcode := x"A";
     CONSTANT type_slt : type_opcode := x"B";
     CONSTANT type_shl : type_opcode := x"C";
     CONSTANT type_shr : type_opcode := x"D";

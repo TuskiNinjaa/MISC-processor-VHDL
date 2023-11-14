@@ -160,6 +160,19 @@ BEGIN
                     temp_codec_data_in <= mem_data_out(data_width - 1 DOWNTO 0);
                     instruction_pointer <= instruction_pointer + 1;
 
+                ELSIF is_equal(instruction_in, type_add) THEN
+                    upcoming_state <= fetch;
+                    
+                    op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
+                    op2 := mem_data_out(data_width - 1 DOWNTO 0);
+                    op1 := STD_LOGIC_VECTOR(to_integer(unsigned(op1)) + to_integer(unsigned(op2)));
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
+
                 ELSIF is_equal(instruction_in, type_slt) THEN
                     upcoming_state <= fetch;
 
