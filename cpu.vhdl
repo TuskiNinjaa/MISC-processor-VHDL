@@ -160,13 +160,36 @@ BEGIN
                     temp_codec_data_in <= mem_data_out(data_width - 1 DOWNTO 0);
                     instruction_pointer <= instruction_pointer + 1;
 
+                ELSIF is_equal(instruction_in, type_puship) THEN
+                    upcoming_state <= fetch;
+
+
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
+                
+                ELSIF is_equal(instruction_in, type_pushim) THEN
+                    upcoming_state <= fetch;
+
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned((data_width/2)-1 DOWNTO 0));
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
+                
                 ELSIF is_equal(instruction_in, type_add) THEN
                     upcoming_state <= fetch;
-                    
+                    -- Remove dois bytes da IMEM e devolva 1 byte
                     op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
                     op1 := STD_LOGIC_VECTOR((signed(op1)) + (signed(op2)));
 
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
                     temp_mem_data_read <= '0';
                     temp_mem_data_write <= '1';
                     temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
@@ -180,6 +203,7 @@ BEGIN
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
                     op1 := STD_LOGIC_VECTOR((signed(op1)) - (signed(op2)));
 
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
                     temp_mem_data_read <= '0';
                     temp_mem_data_write <= '1';
                     temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
@@ -193,6 +217,7 @@ BEGIN
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
                     op1 := STD_LOGIC_VECTOR(signed(op1) nand signed(op2));
 
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
                     temp_mem_data_read <= '0';
                     temp_mem_data_write <= '1';
                     temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
