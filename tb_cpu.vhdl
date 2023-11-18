@@ -43,7 +43,7 @@ BEGIN
             codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0); -- assert
         END RECORD;
 
-        TYPE vetor_tabela_verdade IS ARRAY (0 TO 4) OF colunas_tabela_verdade;
+        TYPE vetor_tabela_verdade IS ARRAY (0 TO 3) OF colunas_tabela_verdade;
 
         -- Implement more test cases
         CONSTANT tabela_verdade : vetor_tabela_verdade := (
@@ -53,11 +53,6 @@ BEGIN
             '1', '1', '0', '1', x"00", x"00" -- Read CODEC
             )
             , (
-            '0', x"00", x"0000", -- IN
-            '0', '1', x"0000", x"0000", x"00000000",
-            '1', '1', '0', '1', x"00", x"00"
-            )
-            , (
             '0', x"10", x"0000", -- IN
             '0', '1', x"0000", x"0000", x"00000000", -- Write DMEM
             '1', '1', '0', '1', x"00", x"00" -- Read CODEC
@@ -68,7 +63,7 @@ BEGIN
             '1', '1', '0', '1', x"00", x"00"
             )
             , (
-            '0', x"D0", x"0000",
+            '0', x"A0", x"0000",
             '1', '0', x"0000", x"0000", x"00000000", -- Read DMEM
             '1', '0', '1', '1', x"00", x"00" -- Write CODEC
             )
