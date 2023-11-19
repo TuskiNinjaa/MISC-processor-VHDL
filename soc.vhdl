@@ -26,14 +26,13 @@ ARCHITECTURE structural OF soc IS
     SIGNAL imem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL imem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL imem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL instruction_pointer, final_instruction_pointer : NATURAL := 0;
+    SIGNAL final_instruction_pointer : NATURAL := 0;
 
     -- DMEM signals
     SIGNAL dmem_data_read, dmem_data_write : STD_LOGIC := '0';
     SIGNAL dmem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL dmem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL dmem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL stack_pointer : NATURAL := 0;
 
     -- CODEC signals
     SIGNAL codec_interrupt : STD_LOGIC := '0';
@@ -44,13 +43,13 @@ ARCHITECTURE structural OF soc IS
     SIGNAL codec_data_out : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
 
     -- CPU signals
+    SIGNAL instruction_in : STD_LOGIC_VECTOR(data_width - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL instruction_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL halt : STD_LOGIC := '1';
 
 BEGIN
-    PROCESS (started)
-    BEGIN
-    END PROCESS;
 
-    PROCESS (clock) -- process to fill IMEM
+    PROCESS (clock, started, imem_data_out, instruction_addr) -- process to fill IMEM
         VARIABLE text_line : line;
         VARIABLE c : CHARACTER;
     BEGIN
@@ -69,6 +68,16 @@ BEGIN
             imem_data_write <= '1';
             imem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(final_instruction_pointer, addr_width));
             final_instruction_pointer <= final_instruction_pointer + 1;
+        END IF;
+
+        IF started = '1' THEN
+            imem_data_read <= '1';
+            imem_data_write <= '0';
+            instruction_in <= imem_data_out(data_width - 1 DOWNTO 0);
+            imem_data_addr <= instruction_addr;
+            halt <= '0';
+        ELSE
+            halt <= '1';
         END IF;
     END PROCESS;
 
@@ -111,24 +120,27 @@ BEGIN
             codec_data_out => codec_data_out
         );
 
-    -- cpu : entity work.cpu(structural)
-    --     generic map (addr_width => addr_width, data_width => data_width)
-    --     port map (
-    --         clock => clock,
-    --         halt => started,
-    --         instruction_in => instruction_in,
-    --         instruction_addr => instruction_addr,
-    --         mem_data_read => dmem_data_read,
-    --         mem_data_write => dmem_data_write,
-    --         mem_data_addr => dmem_data_addr,
-    --         mem_data_in => dmem_data_in,
-    --         mem_data_out => dmem_data_out,
-    --         codec_interrupt => codec_interrupt,
-    --         codec_read => codec_read_signal,
-    --         codec_write => codec_write_signal,
-    --         codec_valid => codec_valid,
-    --         codec_data_out => codec_data_out,
-    --         codec_data_in => codec_data_in
-    --     );
+    cpu : ENTITY work.cpu(behavioral)
+        GENERIC MAP(
+            addr_width => addr_width,
+            data_width => data_width
+        )
+        PORT MAP(
+            clock => clock,
+            halt => halt,
+            instruction_in => instruction_in,
+            instruction_addr => instruction_addr,
+            mem_data_read => dmem_data_read,
+            mem_data_write => dmem_data_write,
+            mem_data_addr => dmem_data_addr,
+            mem_data_in => dmem_data_in,
+            mem_data_out => dmem_data_out,
+            codec_interrupt => codec_interrupt,
+            codec_read => codec_read_signal,
+            codec_write => codec_write_signal,
+            codec_valid => codec_valid,
+            codec_data_out => codec_data_out,
+            codec_data_in => codec_data_in
+        );
 
 END ARCHITECTURE;

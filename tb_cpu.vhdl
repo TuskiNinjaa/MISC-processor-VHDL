@@ -2,6 +2,9 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
+LIBRARY work;
+USE work.opcode.ALL;
+
 ENTITY tb_cpu IS
 END;
 
@@ -25,7 +28,7 @@ ARCHITECTURE hibrida OF tb_cpu IS
     SIGNAL codec_data_out : STD_LOGIC_VECTOR(7 DOWNTO 0);
     SIGNAL codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0);
 BEGIN
-    estimulo_checagem : PROCESS IS
+    tester : PROCESS IS
         TYPE colunas_tabela_verdade IS RECORD
             halt : STD_LOGIC;
             instruction_in : STD_LOGIC_VECTOR(data_width - 1 DOWNTO 0);
@@ -34,59 +37,166 @@ BEGIN
             dmem_data_write : STD_LOGIC; -- assert
             dmem_data_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0); -- assert
             dmem_data_in : STD_LOGIC_VECTOR((data_width * 2) - 1 DOWNTO 0); -- assert
-            dmem_data_out : STD_LOGIC_VECTOR((data_width * 4) - 1 DOWNTO 0);
             codec_interrupt : STD_LOGIC; -- assert
             codec_read : STD_LOGIC; -- assert
             codec_write : STD_LOGIC; -- assert
-            codec_valid : STD_LOGIC;
-            codec_data_out : STD_LOGIC_VECTOR(7 DOWNTO 0);
             codec_data_in : STD_LOGIC_VECTOR(7 DOWNTO 0); -- assert
         END RECORD;
 
-        TYPE vetor_tabela_verdade IS ARRAY (0 TO 3) OF colunas_tabela_verdade;
+        TYPE vetor_tabela_verdade IS ARRAY (0 TO 29) OF colunas_tabela_verdade;
 
         -- Implement more test cases
         CONSTANT tabela_verdade : vetor_tabela_verdade := (
         (
-            '0', x"10", x"0000", -- IN
-            '0', '1', x"0000", x"0000", x"00000000", -- Write DMEM
-            '1', '1', '0', '1', x"00", x"00" -- Read CODEC
+            '0', b"00000000", x"0000", -- HLT
+            '0', '0', x"0000", x"0000",
+            '0', '0', '0', x"00"
             )
             , (
-            '0', x"10", x"0000", -- IN
-            '0', '1', x"0000", x"0000", x"00000000", -- Write DMEM
-            '1', '1', '0', '1', x"00", x"00" -- Read CODEC
+            '0', b"00010000", x"0001", -- IN
+            '0', '1', x"0000", x"000C",
+            '1', '1', '0', x"00"
             )
             , (
-            '0', x"10", x"0000", -- IN
-            '0', '1', x"0000", x"0000", x"00000000",
-            '1', '1', '0', '1', x"00", x"00"
+            '0', b"00100000", x"0002", -- OUT
+            '1', '0', x"0000", x"000C",
+            '1', '0', '1', x"0C"
             )
             , (
-            '0', x"A0", x"0000",
-            '1', '0', x"0000", x"0000", x"00000000", -- Read DMEM
-            '1', '0', '1', '1', x"00", x"00" -- Write CODEC
+            '0', b"00110000", x"0003", -- PUSHIP
+            '0', '1', x"0000", x"0003",
+            '0', '0', '1', x"0C"
             )
-            -- , (
-            -- '0', x"C0", x"0003", -- OUT
-            -- '1', '0', x"0001", x"00F3", x"000000F3", -- Read DMEM
-            -- '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
-            -- )
-            -- , (
-            -- '0', x"D0", x"0004", -- OUT
-            -- '1', '0', x"0001", x"00F3", x"000000F3", -- Read DMEM
-            -- '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
-            -- )
-            -- , (
-            -- '0', x"20", x"0005", -- OUT
-            -- '1', '0', x"0001", x"00F3", x"000000F3", -- Read DMEM
-            -- '1', '0', '1', '1', x"00", x"F3" -- Write CODEC
-            -- )
-            -- , (
-            -- '0', x"20", x"0006", -- OUT
-            -- '1', '0', x"0000", x"00F3", x"0000000C", -- Read DMEM
-            -- '1', '0', '1', '1', x"00", x"0C" -- Write CODEC
-            -- )
+            , (
+            '0', b"01001000", x"0004", -- PUSH -8
+            '0', '1', x"0001", x"00F8",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001001", x"0005", -- PUSH -7
+            '0', '1', x"0002", x"00F9",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001010", x"0006", -- PUSH -6
+            '0', '1', x"0003", x"00FA",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001011", x"0007", -- PUSH -5
+            '0', '1', x"0004", x"00FB",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001100", x"0008", -- PUSH -4
+            '0', '1', x"0005", x"00FC",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001101", x"0009", -- PUSH -3
+            '0', '1', x"0006", x"00FD",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001110", x"000A", -- PUSH -2
+            '0', '1', x"0007", x"00FE",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01001111", x"000B", -- PUSH -1
+            '0', '1', x"0008", x"00FF",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000000", x"000C", -- PUSH 0
+            '0', '1', x"0009", x"0000",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000001", x"000D", -- PUSH 1
+            '0', '1', x"000A", x"0001",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000010", x"000E", -- PUSH 2
+            '0', '1', x"000B", x"0002",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000011", x"000F", -- PUSH 3
+            '0', '1', x"000C", x"0003",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000100", x"0010", -- PUSH 4
+            '0', '1', x"000D", x"0004",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000101", x"0011", -- PUSH 5
+            '0', '1', x"000E", x"0005",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000110", x"0012", -- PUSH 6
+            '0', '1', x"000F", x"0006",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01000111", x"0013", -- PUSH 7
+            '0', '1', x"0010", x"0007",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01010000", x"0014", -- DROP
+            '1', '0', x"0010", x"0007",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"01100000", x"0015", -- DUP
+            '0', '1', x"000F", x"0606",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"10000000", x"0016", -- ADD
+            '0', '1', x"000F", x"000C",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"10010000", x"0017", -- SUB
+            '0', '1', x"000E", x"0007",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"10100000", x"0018", -- NAND
+            '0', '1', x"000D", x"00FB",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"10110000", x"0019", -- SLT
+            '0', '1', x"000C", x"0001",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"11000000", x"001A", -- SHL
+            '0', '1', x"000B", x"0004",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"11010000", x"001B", -- SHR
+            '0', '1', x"000A", x"0002",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"11100000", x"001C", -- JEQ
+            '1', '0', x"0007", x"0002",
+            '0', '0', '1', x"0C"
+            )
+            , (
+            '0', b"11110000", x"001D", -- JMP
+            '1', '0', x"0005", x"0002",
+            '0', '0', '1', x"0C"
+            )
         );
 
     BEGIN
@@ -117,27 +227,29 @@ BEGIN
             clock <= NOT clock;
             WAIT FOR 1 ns;
 
-            -- ASSERT instruction_addr = tabela_verdade(i).instruction_addr REPORT "ERROR: instruction_addr. Line: " & INTEGER'image(i);
-            -- ASSERT dmem_data_read = tabela_verdade(i).dmem_data_read REPORT "ERROR: dmem_data_read. Line: " & INTEGER'image(i);
-            -- ASSERT dmem_data_write = tabela_verdade(i).dmem_data_write REPORT "ERROR: dmem_data_write. Line: " & INTEGER'image(i);
-            -- ASSERT dmem_data_addr = tabela_verdade(i).dmem_data_addr REPORT "ERROR: dmem_data_addr. Line: " & INTEGER'image(i);
-            -- ASSERT codec_interrupt = tabela_verdade(i).codec_interrupt REPORT "ERROR: codec_interrupt. Line: " & INTEGER'image(i);
-            -- ASSERT codec_read = tabela_verdade(i).codec_read REPORT "ERROR: codec_read. Line: " & INTEGER'image(i);
-            -- ASSERT codec_write = tabela_verdade(i).codec_write REPORT "ERROR: codec_write. Line: " & INTEGER'image(i);
-            -- ASSERT dmem_data_in = tabela_verdade(i).dmem_data_in REPORT "ERROR: dmem_data_in. Line: " & INTEGER'image(i);
-            -- ASSERT codec_data_in = tabela_verdade(i).codec_data_in REPORT "ERROR: codec_data_in. Line: " & INTEGER'image(i);
+            IF is_equal(tabela_verdade(i).instruction_in, type_hlt) THEN
+                clock <= NOT clock;
+                WAIT FOR 1 ns;
+                clock <= NOT clock;
+                WAIT FOR 1 ns;
+            END IF;
+
+            ASSERT instruction_addr = tabela_verdade(i).instruction_addr REPORT "ERROR: instruction_addr. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_read = tabela_verdade(i).dmem_data_read REPORT "ERROR: dmem_data_read. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_write = tabela_verdade(i).dmem_data_write REPORT "ERROR: dmem_data_write. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_addr = tabela_verdade(i).dmem_data_addr REPORT "ERROR: dmem_data_addr. Line: " & INTEGER'image(i);
+            ASSERT dmem_data_in = tabela_verdade(i).dmem_data_in REPORT "ERROR: dmem_data_in. Line: " & INTEGER'image(i);
+            ASSERT codec_interrupt = tabela_verdade(i).codec_interrupt REPORT "ERROR: codec_interrupt. Line: " & INTEGER'image(i);
+            ASSERT codec_read = tabela_verdade(i).codec_read REPORT "ERROR: codec_read. Line: " & INTEGER'image(i);
+            ASSERT codec_write = tabela_verdade(i).codec_write REPORT "ERROR: codec_write. Line: " & INTEGER'image(i);
+            ASSERT codec_data_in = tabela_verdade(i).codec_data_in REPORT "ERROR: codec_data_in. Line: " & INTEGER'image(i);
 
         END LOOP;
-
-        clock <= NOT clock;
-        WAIT FOR 1 ns;
-        clock <= NOT clock;
-        WAIT FOR 1 ns;
 
         REPORT "The end of tests";
 
         WAIT;
-    END PROCESS estimulo_checagem;
+    END PROCESS tester;
 
     cpu : ENTITY work.cpu(behavioral)
         GENERIC MAP(

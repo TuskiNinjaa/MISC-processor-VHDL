@@ -42,10 +42,12 @@ END ENTITY;
 
 ARCHITECTURE behavioral OF cpu IS
     -- Implementar maquina de estados para CPU a fim de evitar conflito de instruções. Não da para executar tudo em apenas uma instrução. (fetch, decode, read, execute, write)
-    SIGNAL stack_pointer, instruction_pointer : NATURAL := 0;
+    SIGNAL stack_pointer, instruction_pointer : INTEGER RANGE -10 TO (2 ** addr_width) - 1 := 0;
 
     TYPE state IS (fetch, decode_load, execute_store, halted);
     SIGNAL current_state, upcoming_state : state := halted;
+
+    SIGNAL temp_instruction_addr : STD_LOGIC_VECTOR(addr_width - 1 DOWNTO 0) := STD_LOGIC_VECTOR(to_unsigned(0, addr_width));
 
     SIGNAL temp_mem_data_read : STD_LOGIC := '0';
     SIGNAL temp_mem_data_write : STD_LOGIC := '0';
@@ -79,7 +81,7 @@ BEGIN
                     upcoming_state <= decode_load;
 
                     temp_codec_interrupt <= '0';
-                    instruction_addr <= STD_LOGIC_VECTOR(to_unsigned(instruction_pointer, addr_width));
+                    temp_instruction_addr <= STD_LOGIC_VECTOR(to_unsigned(instruction_pointer, addr_width));
 
                 END IF;
 
@@ -88,45 +90,19 @@ BEGIN
                     -- Go to halted state
                     upcoming_state <= halted;
 
-                ELSIF is_equal(instruction_in, type_hlt) THEN
-                    -- Load 0 byte from DMEM
-                    upcoming_state <= execute_store;
-                
-                ELSIF is_equal(instruction_in, type_puship) THEN
-                    -- Load 0 byte from DMEM
-                    upcoming_state <= execute_store;
-                
-                ELSIF is_equal(instruction_in, type_pushim) THEN
+                ELSIF is_equal(instruction_in, type_hlt) OR is_equal(instruction_in, type_puship) OR is_equal(instruction_in, type_pushim) THEN
                     -- Load 0 byte from DMEM
                     upcoming_state <= execute_store;
 
                 ELSIF is_equal(instruction_in, type_in) THEN
-                    -- Read from CODEC
+                    -- Read 1 byte from CODEC
                     upcoming_state <= execute_store;
 
                     temp_codec_interrupt <= '1';
                     temp_codec_read <= '1';
                     temp_codec_write <= '0';
 
-                ELSIF is_equal(instruction_in, type_out) THEN
-                    -- Load 1 byte from DMEM
-                    upcoming_state <= execute_store;
-
-                    temp_mem_data_read <= '1';
-                    temp_mem_data_write <= '0';
-                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer - 1, addr_width));
-                    stack_pointer <= stack_pointer - 1;
-                
-                ELSIF is_equal(instruction_in, type_drop) THEN
-                    -- Load 1 byte from DMEM
-                    upcoming_state <= execute_store;
-
-                    temp_mem_data_read <= '1';
-                    temp_mem_data_write <= '0';
-                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer - 1, addr_width));
-                    stack_pointer <= stack_pointer - 1;
-                
-                ELSIF is_equal(instruction_in, type_dup) THEN
+                ELSIF is_equal(instruction_in, type_out) OR is_equal(instruction_in, type_drop) OR is_equal(instruction_in, type_dup) THEN
                     -- Load 1 byte from DMEM
                     upcoming_state <= execute_store;
 
@@ -161,11 +137,13 @@ BEGIN
                     upcoming_state <= halted;
 
                 ELSIF is_equal(instruction_in, type_hlt) THEN
+                    -- Interrupt the execution indefinitely
                     upcoming_state <= halted;
 
                     instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_in) THEN
+                    -- Stacks a byte received from the codec
                     upcoming_state <= fetch;
 
                     IF codec_valid = '1' THEN
@@ -178,6 +156,7 @@ BEGIN
                     instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_out) THEN
+                    -- Send a byte to the codec.
                     upcoming_state <= fetch;
 
                     temp_codec_interrupt <= '1';
@@ -187,58 +166,56 @@ BEGIN
                     instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_puship) THEN
-                   upcoming_state <= fetch;
-
-                   temp_mem_data_read <= '0';
-                   temp_mem_data_write <= '1';
-
-                   stack_pointer <= stack_pointer + 1;
-                   temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                   temp_mem_data_in <= instruction_in;
-                   
-                   stack_pointer <= stack_pointer + 1;
-                   instruction_pointer <= instruction_pointer + 1;
-                
-                ELSIF is_equal(instruction_in, type_pushim) THEN
-                   upcoming_state <= fetch;
-
-                   temp_mem_data_in <= instruction_in(data_width/2 - 1 DOWNTO 0);
-
-                   temp_mem_data_read <= '0';
-                   temp_mem_data_write <= '1';
-                   temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                   stack_pointer <= stack_pointer + 1;
-                   instruction_pointer <= instruction_pointer + 1;
-                
-                ELSIF is_equal(instruction_in, type_drop) THEN
-                   upcoming_state <= fetch;
-
-                   op1 := mem_data_out(data_width - 1 DOWNTO 0);
-
-                   temp_mem_data_read <= '0';
-                   temp_mem_data_write <= '1';
-                   temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                   stack_pointer <= stack_pointer + 1;
-                   instruction_pointer <= instruction_pointer + 1;
-                
-                ELSIF is_equal(instruction_in, type_dup) THEN
-                   upcoming_state <= fetch;
-
-                   op1 := mem_data_out(data_width - 1 DOWNTO 0);
-                   temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
-
-                   temp_mem_data_read <= '0';
-                   temp_mem_data_write <= '1';
-                   temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                   stack_pointer <= stack_pointer + 1;
-                   instruction_pointer <= instruction_pointer + 1;
-                
-                ELSIF is_equal(instruction_in, type_add) THEN
+                    -- Stacks the instruction pointer
                     upcoming_state <= fetch;
-                    -- Remove dois bytes da IMEM e devolva 1 byte
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    stack_pointer <= stack_pointer + 1;
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(instruction_pointer, 2 * data_width));
+
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_pushim) THEN
+                    -- Stacks the immediate
+                    upcoming_state <= fetch;
+
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & STD_LOGIC_VECTOR(to_signed(to_integer(signed(instruction_in(data_width/2 - 1 DOWNTO 0))), data_width));
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_drop) THEN
+                    -- Stacks nothing
+                    upcoming_state <= fetch;
+
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_dup) THEN
+                    -- Restacks the element at the top of the stack.
+                    upcoming_state <= fetch;
+
+                    op1 := mem_data_out(data_width - 1 DOWNTO 0);
+                    temp_mem_data_in <= op1 & op1;
+
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 2;
+                    instruction_pointer <= instruction_pointer + 1;
+
+                ELSIF is_equal(instruction_in, type_add) THEN
+                    -- Stacks OP1 + OP2
+                    upcoming_state <= fetch;
+
                     op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
-                    op1 := STD_LOGIC_VECTOR((signed(op1)) + to_integer(signed(op2)));
+                    op1 := STD_LOGIC_VECTOR(signed(op1) + to_integer(signed(op2)));
 
                     temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
                     temp_mem_data_read <= '0';
@@ -246,45 +223,48 @@ BEGIN
                     temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
                     stack_pointer <= stack_pointer + 1;
                     instruction_pointer <= instruction_pointer + 1;
-                
+
                 ELSIF is_equal(instruction_in, type_sub) THEN
-                   upcoming_state <= fetch;
-                      
-                   op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
-                   op2 := mem_data_out(data_width - 1 DOWNTO 0);
-                   op1 := STD_LOGIC_VECTOR((signed(op2)) - to_integer(signed(op1)));
+                    -- Stacks OP1 - OP2
+                    upcoming_state <= fetch;
 
-                   temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
-                   temp_mem_data_read <= '0';
-                   temp_mem_data_write <= '1';
-                   temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                   stack_pointer <= stack_pointer + 1;
-                   instruction_pointer <= instruction_pointer + 1;
-                
+                    op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
+                    op2 := mem_data_out(data_width - 1 DOWNTO 0);
+                    op1 := STD_LOGIC_VECTOR(signed(op1) - to_integer(signed(op2)));
+
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
+
                 ELSIF is_equal(instruction_in, type_nand) THEN
-                   upcoming_state <= fetch;
-                    
-                   op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
-                   op2 := mem_data_out(data_width - 1 DOWNTO 0);
-                   op1 := STD_LOGIC_VECTOR(signed(op2) nand signed(op1));
+                    -- Stacks OP1 NAND OP2
+                    upcoming_state <= fetch;
 
-                   temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
-                   temp_mem_data_read <= '0';
-                   temp_mem_data_write <= '1';
-                   temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
-                   stack_pointer <= stack_pointer + 1;
-                   instruction_pointer <= instruction_pointer + 1;
+                    op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
+                    op2 := mem_data_out(data_width - 1 DOWNTO 0);
+                    op1 := STD_LOGIC_VECTOR(unsigned(op1) NAND unsigned(op2));
+
+                    temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
+                    temp_mem_data_read <= '0';
+                    temp_mem_data_write <= '1';
+                    temp_mem_data_addr <= STD_LOGIC_VECTOR(to_unsigned(stack_pointer, addr_width));
+                    stack_pointer <= stack_pointer + 1;
+                    instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_slt) THEN
+                    -- Stacks 1 if OP1 = OP2 else 0
                     upcoming_state <= fetch;
 
                     op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
 
-                    IF to_integer(unsigned(op1)) < to_integer(unsigned(op2)) THEN
-                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(1, data_width * 2));
+                    IF to_integer(signed(op1)) < to_integer(signed(op2)) THEN
+                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(1, 2 * data_width));
                     ELSE
-                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width * 2));
+                        temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, 2 * data_width));
                     END IF;
 
                     temp_mem_data_read <= '0';
@@ -294,11 +274,12 @@ BEGIN
                     instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_shl) THEN
+                    -- Stacks OP1 << OP2
                     upcoming_state <= fetch;
 
                     op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
-                    op1 := STD_LOGIC_VECTOR(shift_left(unsigned(op1), to_integer(unsigned(op2))));
+                    op1 := STD_LOGIC_VECTOR(shift_left(signed(op1), to_integer(unsigned(op2))));
 
                     temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
                     temp_mem_data_read <= '0';
@@ -308,11 +289,12 @@ BEGIN
                     instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_shr) THEN
+                    -- Stacks OP1 >> OP2
                     upcoming_state <= fetch;
 
                     op1 := mem_data_out(2 * data_width - 1 DOWNTO data_width);
                     op2 := mem_data_out(data_width - 1 DOWNTO 0);
-                    op1 := STD_LOGIC_VECTOR(shift_right(unsigned(op1), to_integer(unsigned(op2))));
+                    op1 := STD_LOGIC_VECTOR(shift_right(signed(op1), to_integer(unsigned(op2))));
 
                     temp_mem_data_in <= STD_LOGIC_VECTOR(to_unsigned(0, data_width)) & op1;
                     temp_mem_data_read <= '0';
@@ -322,6 +304,7 @@ BEGIN
                     instruction_pointer <= instruction_pointer + 1;
 
                 ELSIF is_equal(instruction_in, type_jeq) THEN
+                    -- If OP1 = OP2 then IP <= O3 else goes to next instruction
                     upcoming_state <= fetch;
 
                     op1 := mem_data_out(4 * data_width - 1 DOWNTO 3 * data_width);
@@ -335,6 +318,7 @@ BEGIN
                     END IF;
 
                 ELSIF is_equal(instruction_in, type_jmp) THEN
+                    -- IP receives OP3 as the new instruction address
                     upcoming_state <= fetch;
 
                     op3 := mem_data_out(2 * data_width - 1 DOWNTO 0);
@@ -349,6 +333,8 @@ BEGIN
 
         END CASE;
     END PROCESS;
+
+    instruction_addr <= temp_instruction_addr;
 
     mem_data_read <= temp_mem_data_read;
     mem_data_write <= temp_mem_data_write;

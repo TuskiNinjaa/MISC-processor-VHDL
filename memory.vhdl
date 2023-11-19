@@ -29,16 +29,13 @@ BEGIN
 
     -- Edge-triggered random access memory
     PROCESS (clock)
-        VARIABLE index : INTEGER RANGE 0 TO (2 ** addr_width) - 1;
     BEGIN
         IF clock'event AND clock = '0' THEN
-            index := to_integer(unsigned(data_addr));
-
             IF data_read = '1' AND data_write = '0' THEN
-                output <= ram(index + 3) & ram(index + 2) & ram(index + 1) & ram(index);
+                output <= ram(to_integer(unsigned(data_addr)) + 3) & ram(to_integer(unsigned(data_addr)) + 2) & ram(to_integer(unsigned(data_addr)) + 1) & ram(to_integer(unsigned(data_addr)));
             ELSIF data_read = '0' AND data_write = '1' THEN
-                ram(index) <= data_in(data_width - 1 DOWNTO 0);
-                ram(index + 1) <= data_in(2 * data_width - 1 DOWNTO data_width);
+                ram(to_integer(unsigned(data_addr))) <= data_in(data_width - 1 DOWNTO 0);
+                ram(to_integer(unsigned(data_addr)) + 1) <= data_in(2 * data_width - 1 DOWNTO data_width);
                 output <= STD_LOGIC_VECTOR(to_unsigned(0, data_width * 4));
             END IF;
 
