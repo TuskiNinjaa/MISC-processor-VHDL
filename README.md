@@ -3,7 +3,7 @@ Project developed for the Hardware Laboratory discipline at UFMS
 
 ## Instructions
 
-| OPCODE | Menumonic | Description |
+| OPCODE | Mnemonic | Description |
 | :---: | :---: | :---: |
 | 0x0 | HLT  | Interrupts execution indefinitely |
 | 0x1 | IN  | Stacks a byte received from the codec |
