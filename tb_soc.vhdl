@@ -64,6 +64,21 @@ BEGIN
         clock <= NOT clock;
         WAIT FOR 1 ns;
 
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+        clock <= NOT clock;
+        WAIT FOR 1 ns;
+
         REPORT "The end of tests";
 
         WAIT;

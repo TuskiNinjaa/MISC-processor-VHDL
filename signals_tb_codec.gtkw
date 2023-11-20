@@ -1,0 +1,30 @@
+[*]
+[*] GTKWave Analyzer v3.3.117 (w)1999-2023 BSI
+[*] Mon Nov 20 13:03:53 2023
+[*]
+[dumpfile] "/home/yuske/Documentos/LabHard/MISC-processor-VHDL/wave_tb_codec.ghw"
+[dumpfile_mtime] "Mon Nov 20 13:03:16 2023"
+[dumpfile_size] 1086
+[savefile] "/home/yuske/Documentos/LabHard/MISC-processor-VHDL/signals_tb_codec.gtkw"
+[timestart] 0
+[size] 1000 600
+[pos] -1 -1
+*-23.474762 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tb_codec.
+[treeopen] top.tb_codec.cod.
+[sst_width] 217
+[signals_width] 182
+[sst_expanded] 1
+[sst_vpaned_height] 151
+@28
+top.tb_codec.interrupt
+top.tb_codec.read_signal
+top.tb_codec.write_signal
+top.tb_codec.valid
+@22
+#{top.tb_codec.codec_data_in[7:0]} top.tb_codec.codec_data_in[7] top.tb_codec.codec_data_in[6] top.tb_codec.codec_data_in[5] top.tb_codec.codec_data_in[4] top.tb_codec.codec_data_in[3] top.tb_codec.codec_data_in[2] top.tb_codec.codec_data_in[1] top.tb_codec.codec_data_in[0]
+@23
+#{top.tb_codec.codec_data_out[7:0]} top.tb_codec.codec_data_out[7] top.tb_codec.codec_data_out[6] top.tb_codec.codec_data_out[5] top.tb_codec.codec_data_out[4] top.tb_codec.codec_data_out[3] top.tb_codec.codec_data_out[2] top.tb_codec.codec_data_out[1] top.tb_codec.codec_data_out[0]
+[pattern_trace] 1
+[pattern_trace] 0
